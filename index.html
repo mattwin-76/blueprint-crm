@@ -827,8 +827,12 @@ const DAY_LABEL = { sat: "Saturday", frisun: "Fri/Sun", weekday: "Weekday" };
 const SEASON_LABEL = { peak: "peak season", shoulder: "shoulder season", off: "off season" };
 
 let BLUEPRINTS = {};
+// Menu order (founder: hair salon first, containers near the bottom); new built-ins not listed go before containers, custom ones at the end
+const BP_ORDER = ["salon", "rental", "retail", "software", "furniture", "wholesale", "sheds", "roofing", "moving", "homeservices", "container", "cleaning"];
+const DEFAULT_BP = "salon";
 function loadBlueprints() {
-  BLUEPRINTS = { ...BUILTIN, ...(S.custom || {}) };
+  const rank = (id) => BP_ORDER.includes(id) ? BP_ORDER.indexOf(id) : BUILTIN[id] ? BP_ORDER.indexOf("container") - .5 : 99;
+  BLUEPRINTS = Object.fromEntries(Object.entries({ ...BUILTIN, ...(S.custom || {}) }).sort((a, c) => rank(a[0]) - rank(c[0])));
   Object.values(BLUEPRINTS).forEach(b => {
     b.stageTone = b.stageTone || Object.fromEntries(b.stages.map((st, i) => [st, i === b.stages.length - 1 ? "var(--bad)" : i === b.stages.length - 2 ? "var(--good)" : TONES[i % 5]]));
     b.stageHelp = b.stageHelp || {}; b.requires = b.requires || {}; b.addons = b.addons || []; b.faq = b.faq || []; b.agents = b.agents || []; b.adProducts = b.adProducts || []; b.siteCheck = b.siteCheck || []; b.depots = b.depots || []; b.team = b.team || ["Owner"];
@@ -1078,7 +1082,7 @@ function seedBase() {
   const now = Date.now(), ago = (x) => now - x * DAY, L = (x, text) => [{ t: ago(x), text }];
   const deal = (o) => ({ opens: 0, lastMsg: now, created: now, log: [], ...o });
   return {
-    v: 3, bp: "container", view: "today", filter: "all", rep: "all", settings: {}, fulfillment: {}, drafts: [], ads: {}, custom: {}, faqExtra: {}, day: TODAY,
+    v: 3, bp: DEFAULT_BP, view: "today", filter: "all", rep: "all", settings: {}, fulfillment: {}, drafts: [], ads: {}, custom: {}, faqExtra: {}, day: TODAY,
     proposals: { container: [
       { id: "p1", cat: "Pay after delivery", q: "Can I see the container before I pay?", a: "Yes. With pay after delivery you inspect it when it arrives and pay once you're happy. Depot visits are by appointment.", why: "Asked in 3 recent conversations; not in the knowledge base." },
       { id: "p2", cat: "Delivery & pickup", q: "Is delivery cheaper if I buy two?", a: "Often, yes: two 20 ft can ride on one truck. Ask us to quote both together.", why: "Two leads asked about multiple units this week." },
@@ -1231,7 +1235,8 @@ let S;
 try { S = JSON.parse(localStorage.getItem(KEY) || "null"); } catch { S = null; }
 if (!S || S.v !== 3) S = seed();
 loadBlueprints();
-if (!BLUEPRINTS[S.bp]) { S.bp = "container"; S.view = "today"; }
+if (!BLUEPRINTS[S.bp]) { S.bp = DEFAULT_BP; S.view = "today"; }
+if ((S.orderRev || 0) < 1) { S.bp = DEFAULT_BP; S.view = "today"; S.orderRev = 1; }
 { const fresh = seed(); Object.keys(BUILTIN).forEach(id => { if (!S.data[id]) S.data[id] = fresh.data[id]; else if ((S.seedRev || 0) < 2) { const have = new Set(S.data[id].deals.map(x => x.id)); fresh.data[id].deals.forEach(x => { if (!have.has(x.id)) S.data[id].deals.push(x); }); } }); S.seedRev = 2; delete S.data.venue; }
 if ((S.demoRev || 0) < 1) { addDemo(S); S.demoRev = 1; }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
@@ -2392,7 +2397,7 @@ function render() {
     const lg = document.querySelector(".chatw-log"); if (lg) lg.scrollTop = lg.scrollHeight;
   }
   byId("reset-settings", el => el.onclick = () => { S.settings[b.id] = {}; delete S.fulfillment[b.id]; save(); render(); });
-  byId("del-bp", el => el.onclick = () => { if (el.dataset.confirm) { delete S.custom[b.id]; delete S.data[b.id]; S.bp = "container"; S.view = "today"; loadBlueprints(); save(); boot(); toast("Blueprint deleted."); } else { el.dataset.confirm = "1"; el.textContent = "Click again to delete"; } });
+  byId("del-bp", el => el.onclick = () => { if (el.dataset.confirm) { delete S.custom[b.id]; delete S.data[b.id]; S.bp = DEFAULT_BP; S.view = "today"; loadBlueprints(); save(); boot(); toast("Blueprint deleted."); } else { el.dataset.confirm = "1"; el.textContent = "Click again to delete"; } });
   byId("ask-go", el => el.onclick = () => { if (!S.asking) askGo(); });
   if (S.view === "marketing") { const ad = S.ads[b.id];
     byId("ad-city", el => el.onchange = () => { ad.city = el.value; ad.result = null; save(); render(); });
