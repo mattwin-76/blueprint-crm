@@ -421,9 +421,10 @@
   .lg-users { display: flex; flex-direction: column; gap: 6px; }
   .lg-user { display: flex; gap: 12px; align-items: center; text-align: left; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); font: inherit; color: var(--ink); cursor: pointer; }
   .lg-user:hover { border-color: var(--accent); background: var(--accent-soft); }
+  code.uname { font: 600 .72rem/1 "JetBrains Mono", monospace; padding: 2px 6px; border-radius: 6px; background: var(--panel-2); border: 1px solid var(--line); color: var(--ink); }
   .lg-who { display: flex; flex-direction: column; gap: 3px; min-width: 0; } .lg-who small { color: var(--muted); font-size: .78rem; }
   table.users input, table.users select { padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); min-width: 0; width: 100%; }
-  table.users { min-width: 900px; } table.users td:nth-child(1) { min-width: 230px; } table.users td:nth-child(2) { min-width: 240px; } table.users td:nth-child(3) { min-width: 120px; } table.users td:nth-child(4) { min-width: 120px; }
+  table.users { min-width: 900px; } table.users td:nth-child(1) { min-width: 230px; } table.users { min-width: 1020px; } table.users td:nth-child(2) { min-width: 120px; } table.users td:nth-child(3) { min-width: 230px; } table.users td:nth-child(4), table.users td:nth-child(5) { min-width: 120px; }
   table.users input[type="checkbox"] { width: auto; }
   table.users td { vertical-align: middle; } table.users td.c, table.perms td.c { text-align: center; }
   table.users tr.off td { opacity: .5; }
@@ -1343,6 +1344,7 @@ const RULES = {
   money: { fn: (v) => { const x = v.replace(/[^\d.]/g, "").replace(/(\..*)\./g, "$1"), [a, c] = x.split("."); return c != null ? a + "." + c.slice(0, 2) : a; }, hint: "Dollar amount: numbers and up to 2 decimals" },
   phone: { re: /[^0-9()+\-.\s]/g, max: 20, hint: "Numbers and ( ) - + . only" },
   zip: { re: /\D/g, max: 5, hint: "ZIP codes are 5 digits: numbers only" },
+  username: { fn: (v) => v.toLowerCase().replace(/[^a-z0-9._\-]/g, ""), max: 30, hint: "Lowercase letters, numbers and . _ - only" },
   email: { re: /[^A-Za-z0-9._%+\-@]/g, max: 80, hint: "Letters, numbers and . _ % + - @ only" },
 };
 const TEXT_CHARS = { letters: "Letters only", alnum: "Letters & numbers", code: "Codes (# * -)", address: "Address", free: "Any text" };
@@ -1713,7 +1715,10 @@ function acctOf(b) {
       ...b.team.map((t, i) => ({ name: t, role: i === 0 && b.team.length > 1 ? "manager" : "user", works: true })), { name: "Robin Diaz (bookkeeper)", role: "readonly", works: false }];
     S.acct[b.id] = { users: users.map((u, i) => ({ id: "u" + i, email: mail(u.name), team: "Main team", active: true, ...u })), requests: [] };
   }
-  return S.acct[b.id];
+  const a = S.acct[b.id];
+  if (a.users.some(u => !u.username)) { const taken = new Set(a.users.map(u => u.username).filter(Boolean));
+    a.users.forEach(u => { if (u.username) return; let n = !taken.has(u.role) ? u.role : wfSlug(u.name.replace(/.*·\s*/, "")).split(".")[0] || "user", k = 2, base = n; while (taken.has(n)) n = base + k++; u.username = n; taken.add(n); }); }
+  return a;
 }
 function me() { const b = bp(), id = (S.session || {})[b.id]; return acctOf(b).users.find(u => u.id === id && u.active) || null; }
 const can = (k) => { const u = me(); return !!u && CAN[k].includes(u.role); };
@@ -1723,6 +1728,8 @@ function inScope(b, x) {
   if (u.role === "user") return who.includes(u.name);
   const team = acctOf(b).users.filter(v => v.team === u.team).map(v => v.name); return !who.length || who.some(n => team.includes(n));
 }
+const DEMO_PASSWORD = (u) => u.username; // prototype only: every password equals the username
+const uniqueUsername = (a, name) => { let base = wfSlug(name.replace(/.*·\s*/, "")).split(".")[0] || "user", n = base, k = 2; while (a.users.some(u => u.username === n)) n = base + k++; return n; };
 const initials = (n) => n.replace(/\(.*?\)/g, "").replace(/.*·\s*/, "").split(/\s+/).filter(Boolean).map(w => w[0]).join("").slice(0, 2).toUpperCase();
 const rolePill = (r) => `<span class="rpill" style="--t:${ROLES[r].tone}">${ROLES[r].label}</span>`;
 function notifyAdmins(b, subject, body) {
@@ -1742,14 +1749,17 @@ function renderLogin() {
   el.innerHTML = `<div class="login-card">
     <div class="logo"><svg width="38" height="38" viewBox="0 0 34 34" aria-hidden="true"><rect x="1" y="1" width="32" height="32" rx="8" fill="var(--accent)"/><path d="M8 24V10h8.5a4 4 0 0 1 0 8H8m8.5 0h1.5a3 3 0 0 1 0 6H8" fill="none" stroke="var(--on-accent)" stroke-width="2.2" stroke-linejoin="round"/></svg><div><h1>Blueprint CRM</h1><span>Sign in</span></div></div>
     <div class="field"><label for="lg-bp">Business</label><select id="lg-bp">${Object.values(BLUEPRINTS).map(x => `<option value="${x.id}" ${x.id === b.id ? "selected" : ""}>${esc(x.business.replace(/ \(sample\)$/, ""))} · ${esc(x.name)}</option>`).join("")}</select></div>
-    <form class="field" id="lg-form"><label for="lg-email">Work email</label><div class="row" style="flex-wrap:nowrap"><input id="lg-email" type="email" inputmode="email" data-rule="email" autocomplete="username" placeholder="you@company.com" style="flex:1;min-width:0"><button class="btn primary" type="submit">Continue</button></div></form>
-    <div class="lg-or"><span>or try a sample user</span></div>
-    <div class="lg-users">${a.users.filter(u => u.active).map(u => `<button type="button" class="lg-user" data-login="${u.id}"><span class="av" style="--t:${ROLES[u.role].tone}">${esc(initials(u.name))}</span><span class="lg-who"><span class="row" style="gap:6px"><b>${esc(u.name)}</b>${rolePill(u.role)}</span><small>${esc(ROLES[u.role].about)}</small></span></button>`).join("")}</div>
-    <p class="muted" style="font-size:.74rem">Prototype sign-in: there are no passwords, and it's remembered only in this browser. The real product uses secure sign-in (email and password, or Google or Microsoft) with two-step verification.</p></div>`;
+    <form class="stack" id="lg-form" style="gap:10px"><div class="field"><label for="lg-user">Username</label><input id="lg-user" data-rule="username" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="e.g. owner"></div>
+      <div class="field"><label for="lg-pass">Password</label><input id="lg-pass" type="password" autocomplete="current-password" maxlength="60"></div>
+      <button class="btn primary" type="submit" style="justify-content:center">Sign in</button></form>
+    <div class="lg-or"><span>demo accounts · password is the same as the username</span></div>
+    <div class="lg-users">${a.users.filter(u => u.active).map(u => `<button type="button" class="lg-user" data-login="${u.id}"><span class="av" style="--t:${ROLES[u.role].tone}">${esc(initials(u.name))}</span><span class="lg-who"><span class="row" style="gap:6px"><b>${esc(u.name)}</b>${rolePill(u.role)}<code class="uname">${esc(u.username)}</code></span><small>${esc(ROLES[u.role].about)}</small></span></button>`).join("")}</div>
+    <p class="muted" style="font-size:.74rem">Demo sign-in: passwords match usernames and are checked in this page, so they don't protect anything. The real product uses secure sign-in with hashed passwords and two-step verification.</p></div>`;
   $("lg-bp").onchange = (e) => { S.bp = e.target.value; ensureData(bp()); save(); renderLogin(); };
-  $("lg-form").onsubmit = (e) => { e.preventDefault(); const v = $("lg-email").value.trim().toLowerCase(), u = acctOf(bp()).users.find(x => x.active && x.email.toLowerCase() === v);
-    if (!v) return flagInput($("lg-email"), "Enter your work email"); if (!u) return flagInput($("lg-email"), "No active user with that email at this business"); signIn(u.id); };
-  el.querySelectorAll("[data-login]").forEach(x => x.onclick = () => signIn(x.dataset.login));
+  $("lg-form").onsubmit = (e) => { e.preventDefault(); const v = $("lg-user").value.trim().toLowerCase(), p = $("lg-pass").value, u = acctOf(bp()).users.find(x => x.active && (x.username === v || x.email.toLowerCase() === v));
+    if (!v) return flagInput($("lg-user"), "Enter your username"); if (!p) return flagInput($("lg-pass"), "Enter your password");
+    if (!u || p !== DEMO_PASSWORD(u)) { $("lg-pass").value = ""; return flagInput($("lg-pass"), "Wrong username or password"); } signIn(u.id); };
+  el.querySelectorAll("[data-login]").forEach(x => x.onclick = () => { const u = acctOf(bp()).users.find(y => y.id === x.dataset.login); $("lg-user").value = u.username; $("lg-pass").value = ""; $("lg-pass").focus(); });
 }
 function renderWho() {
   const u = me(), el = $("whoami"); if (!el || !u) return;
@@ -1785,8 +1795,9 @@ function viewUsers() {
   return `${head("Users & roles", `Who can sign in to ${biz}`, "Each person gets a role. The role decides which records they see and what they can change.")}
     ${can("users") && a.requests.length ? `<section class="panel stack"><div class="panel-title"><span>Setup change requests</span><span>${pending.length} waiting</span></div>
       ${a.requests.slice(0, 10).map(r => `<div class="cond"><span><b>${esc(r.by)}</b> · ${esc(r.area)}: ${esc(r.text)} <span class="muted" style="font-size:.74rem">${shortDate(r.t)}</span></span>${r.status === "pending" ? `<span class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn small primary" type="button" data-rqok="${r.id}">Approve</button><button class="btn small" type="button" data-rqno="${r.id}">Decline</button></span>` : `<span class="spill" style="--t:${r.status === "approved" ? "#23806A" : "#A6362A"}">${r.status === "approved" ? "Approved" : "Declined"}${r.decidedBy ? " · " + esc(r.decidedBy.split(" ")[0]) : ""}</span>`}</div>`).join("")}</section>` : ""}
-    <section class="panel"><div class="panel-title"><span>People</span><span>${a.users.filter(x => x.active).length} active</span></div><div class="table-wrap"><table class="users"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Team</th><th title="Can be assigned records and appointments">Works records</th><th>Active</th><th></th></tr></thead><tbody>
+    <section class="panel"><div class="panel-title"><span>People</span><span>${a.users.filter(x => x.active).length} active</span></div><div class="table-wrap"><table class="users"><thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Role</th><th>Team</th><th title="Can be assigned records and appointments">Works records</th><th>Active</th><th></th></tr></thead><tbody>
       ${a.users.map(x => { const ed = editable(x), self = x.id === u.id; return `<tr class="${x.active ? "" : "off"}"><td><span class="row" style="gap:8px;flex-wrap:nowrap"><span class="av sm" style="--t:${ROLES[x.role].tone}">${esc(initials(x.name))}</span><input data-uname="${x.id}" data-rule="name" maxlength="40" value="${esc(x.name)}" aria-label="Name" ${ed ? "" : "disabled"}></span></td>
+        <td><input data-uuser="${x.id}" data-rule="username" maxlength="30" value="${esc(x.username)}" aria-label="Username" ${ed ? "" : "disabled"}></td>
         <td><input data-uemail="${x.id}" type="email" data-rule="email" maxlength="80" value="${esc(x.email)}" aria-label="Email" ${ed ? "" : "disabled"}></td>
         <td><select data-urole="${x.id}" aria-label="Role" ${ed && !self ? "" : "disabled"}>${roleOpts(x)}</select></td>
         <td><input data-uteam="${x.id}" data-rule="label" maxlength="24" value="${esc(x.team)}" aria-label="Team" ${ed ? "" : "disabled"}></td>
@@ -1795,7 +1806,7 @@ function viewUsers() {
         <td>${ed && !self ? `<button class="btn small" type="button" data-udel="${x.id}" aria-label="Remove ${esc(x.name)}">✕</button>` : self ? '<span class="muted" style="font-size:.74rem">you</span>' : ""}</td></tr>`; }).join("")}</tbody></table></div>
       ${can("users") ? `<div class="condadd" style="margin-top:12px"><input id="nu-name" data-rule="name" maxlength="40" placeholder="Full name" aria-label="New user's name"><input id="nu-email" type="email" data-rule="email" maxlength="80" placeholder="email@company.com" aria-label="New user's email"><select id="nu-role" aria-label="Role">${Object.entries(ROLES).filter(([k]) => k !== "owner" || u.role === "owner").map(([k, v]) => `<option value="${k}" ${k === "user" ? "selected" : ""}>${v.label}</option>`).join("")}</select><label class="ckline" style="align-items:center"><input type="checkbox" id="nu-works" checked> Works records</label><button class="btn small primary" type="button" id="nu-add">+ Add user</button></div>` : ""}</section>
     <section class="panel"><div class="panel-title"><span>What each role can do</span></div><div class="table-wrap"><table class="perms"><thead><tr><th></th>${Object.entries(ROLES).map(([k, v]) => `<th>${rolePill(k)}</th>`).join("")}</tr></thead><tbody>${PERM_ROWS.map(r => `<tr><td>${esc(r[0])}</td>${r.slice(1).map(c => `<td class="c ${c === "—" ? "muted" : ""}">${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
-      <p class="muted" style="font-size:.76rem;margin-top:8px">“own” = records they handle or are assigned; “team” = records handled by anyone on their team. “Works records” puts someone on the list of people records and bookings can be assigned to.</p></section>`;
+      <p class="muted" style="font-size:.76rem;margin-top:8px">Demo sign-in: each person's password is the same as their username. “own” = records they handle or are assigned; “team” = records handled by anyone on their team. “Works records” puts someone on the list of people records and bookings can be assigned to.</p></section>`;
 }
 function renameUser(b, x, n) {
   const old = x.name, w = wfCfg(b); if (!n || n === old) return;
@@ -1809,6 +1820,7 @@ function wireUsers() {
   const owners = () => a.users.filter(x => x.active && x.role === "owner").length;
   const done = (msg) => { loadBlueprints(); save(); render(); if (msg) toast(msg); };
   on("[data-uname]", el => el.onchange = () => { const x = find(el.dataset.uname), n = el.value.trim().replace(/\s+/g, " "); if (!n) { el.value = x.name; return; } if (a.users.some(y => y !== x && y.name === n)) { el.value = x.name; return toast(`${n} is already a user.`); } renameUser(b, x, n); done(`Renamed to ${n}. Their records moved with them.`); });
+  on("[data-uuser]", el => el.onchange = () => { const x = find(el.dataset.uuser), v = el.value.trim().toLowerCase(); if (!v) { el.value = x.username; return; } if (a.users.some(y => y !== x && y.username === v)) { el.value = x.username; return toast(`The username ${v} is taken.`); } x.username = v; done(`${x.name} now signs in as ${v} (demo password: ${v}).`); });
   on("[data-uemail]", el => el.onchange = () => { const x = find(el.dataset.uemail), v = el.value.trim(); if (!/^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/.test(v)) return flagInput(el, "Enter an email like name@company.com"); if (a.users.some(y => y !== x && y.email.toLowerCase() === v.toLowerCase())) return flagInput(el, "Another user has that email"); x.email = v; wfCfg(b).people[x.name] = v; done(`Email saved for ${x.name}.`); });
   on("[data-urole]", el => el.onchange = () => { const x = find(el.dataset.urole); if (x.role === "owner" && el.value !== "owner" && owners() <= 1) { el.value = "owner"; return toast("Every business needs at least one Owner. Make someone else Owner first."); } x.role = el.value; done(`${x.name} is now ${ROLES[x.role].label}.`); });
   on("[data-uteam]", el => el.onchange = () => { const x = find(el.dataset.uteam); x.team = el.value.trim() || "Main team"; done(); });
@@ -1818,8 +1830,8 @@ function wireUsers() {
   const add = $("nu-add"); if (add) add.onclick = () => { const n = $("nu-name").value.trim().replace(/\s+/g, " "), em = $("nu-email").value.trim();
     if (!n) return flagInput($("nu-name"), "Add a name"); if (!/^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/.test(em)) return flagInput($("nu-email"), "Enter an email like name@company.com");
     if (a.users.some(y => y.name === n)) return flagInput($("nu-name"), "That name is already a user"); if (a.users.some(y => y.email.toLowerCase() === em.toLowerCase())) return flagInput($("nu-email"), "Another user has that email");
-    const x = { id: "u" + Date.now().toString(36), name: n, email: em, role: $("nu-role").value, team: me().team || "Main team", works: $("nu-works").checked, active: true }; a.users.push(x); if (x.works) wfCfg(b).people[n] = em;
-    done(`${n} added as ${ROLES[x.role].label}. In the build they'd get an email invite to set up their sign-in.`); };
+    const x = { id: "u" + Date.now().toString(36), name: n, username: uniqueUsername(a, n), email: em, role: $("nu-role").value, team: me().team || "Main team", works: $("nu-works").checked, active: true }; a.users.push(x); if (x.works) wfCfg(b).people[n] = em;
+    done(`${n} added as ${ROLES[x.role].label}. Username ${x.username}, demo password ${x.username}.`); };
   on("[data-rqok]", el => el.onclick = () => { const r = a.requests.find(y => y.id === el.dataset.rqok); r.status = "approved"; r.decidedBy = me().name; r.decidedAt = Date.now(); done(`Approved. Make the change in ${r.area === "Workflow" ? "Workflow" : "Blueprint"}; ${r.by.split(" ")[0]} sees it's approved.`); });
   on("[data-rqno]", el => el.onclick = () => { const r = a.requests.find(y => y.id === el.dataset.rqno); r.status = "declined"; r.decidedBy = me().name; r.decidedAt = Date.now(); done("Declined."); });
 }
