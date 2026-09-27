@@ -406,6 +406,38 @@
   .depot { display: flex; flex-direction: column; align-items: center; line-height: 1; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.45)); }
   .depot span { margin-top: 2px; font: 700 10px/1 "JetBrains Mono", monospace; color: #1A1204; background: var(--accent); padding: 2px 4px; border-radius: 4px; }
   .depot.on span { background: var(--ink); color: var(--panel); }
+  .flow { display: flex; align-items: stretch; overflow-x: auto; padding: 4px 2px 10px; }
+  .fstep { min-width: 186px; max-width: 220px; background: var(--panel); border: 1px solid var(--line); border-top: 4px solid var(--stage); border-radius: 12px; padding: 10px 11px; display: flex; flex-direction: column; gap: 5px; cursor: pointer; text-align: left; color: var(--ink); font: inherit; }
+  .fstep:hover { border-color: var(--line-strong); border-top-color: var(--stage); }
+  .fstep[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--accent); }
+  .fstep b { font-size: .98rem; }
+  .fnum { font: 600 .64rem/1 "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .fmeta { font-size: .76rem; color: var(--muted); }
+  .farrow { align-self: center; color: var(--muted); padding: 0 6px; font-size: 1.1rem; flex: none; }
+  .fbar { display: flex; height: 7px; border-radius: 4px; overflow: hidden; background: var(--panel-2); gap: 1px; }
+  .fbar i { display: block; }
+  .spill { display: inline-flex; align-items: center; gap: 5px; font-size: .72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; color: var(--t); background: color-mix(in srgb, var(--t) 13%, transparent); border: 1px solid color-mix(in srgb, var(--t) 35%, transparent); }
+  .spill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--t); }
+  .cond { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 9px; font-size: .86rem; background: var(--panel-2); }
+  .condadd { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .condadd select, .condadd input, .srow input, .srow select { padding: 7px 9px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--panel); min-width: 0; }
+  .srow { display: grid; grid-template-columns: 26px minmax(0, 1fr) 118px auto; gap: 6px; align-items: center; }
+  .stone { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--line-strong); cursor: pointer; }
+  .ckline { display: flex; gap: 8px; align-items: flex-start; font-size: .88rem; }
+  .ckline input { margin-top: 3px; }
+  .wfmail summary, .notice summary { cursor: pointer; font-size: .86rem; }
+  .notice { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+  .notice summary { display: flex; justify-content: space-between; gap: 10px; list-style: none; }
+  .nbody { white-space: pre-wrap; font: .8rem/1.45 "JetBrains Mono", monospace; background: var(--panel-2); border-radius: 8px; padding: 8px; margin: 8px 0; }
+  .queue { border: 1px solid var(--line); border-radius: 11px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .qitem { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 8px; border-radius: 8px; border: none; background: var(--panel-2); font: inherit; font-size: .84rem; color: var(--ink); text-align: left; cursor: pointer; }
+  .qitem:hover { background: var(--accent-soft); }
+  .wfbox { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: var(--panel-2); }
+  .wfbox.over { border-color: var(--bad); }
+  .gate { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: .85rem; }
+  .gate li.ok { color: var(--muted); } .gate li.ok::before { content: "✓ "; color: var(--good); font-weight: 700; }
+  .gate li.no::before { content: "✗ "; color: var(--bad); font-weight: 700; }
+  .card .wfl { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: .74rem; color: var(--muted); }
   .leaflet-container { background: var(--map-water); }
   .leaflet-control-scale { margin: 0 0 8px 10px !important; }
   .leaflet-control-scale-line { border: 2px solid var(--ink); border-top: none; padding: 1px 6px; font-size: 11px; font-weight: 600; color: var(--ink); background: color-mix(in srgb, var(--panel) 80%, transparent); }
@@ -835,6 +867,7 @@ function loadBlueprints() {
   BLUEPRINTS = Object.fromEntries(Object.entries({ ...BUILTIN, ...(S.custom || {}) }).sort((a, c) => rank(a[0]) - rank(c[0])));
   Object.values(BLUEPRINTS).forEach(b => {
     b.stageTone = b.stageTone || Object.fromEntries(b.stages.map((st, i) => [st, i === b.stages.length - 1 ? "var(--bad)" : i === b.stages.length - 2 ? "var(--good)" : TONES[i % 5]]));
+    applyWfStages(b);
     b.stageHelp = b.stageHelp || {}; b.requires = b.requires || {}; b.addons = b.addons || []; b.faq = b.faq || []; b.agents = b.agents || []; b.adProducts = b.adProducts || []; b.siteCheck = b.siteCheck || []; b.depots = b.depots || []; b.team = b.team || ["Owner"];
   });
 }
@@ -1337,6 +1370,7 @@ function summary(b, x) {
 function apptOf(deal) { return D().appts.filter(a => a.dealId === deal.id).sort((a, c) => (a.date + a.start).localeCompare(c.date + c.start)).find(a => a.date >= TODAY) || null; }
 
 const ICONS = {
+  workflow: '<rect x="2.5" y="4" width="6" height="5" rx="1.2"/><rect x="15.5" y="4" width="6" height="5" rx="1.2"/><rect x="9" y="15" width="6" height="5" rx="1.2"/><path d="M8.5 6.5h7M18.5 9v3.5H12V15"/>',
   today: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
   leads: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.8 3.4-6 6.5-6s5.7 2.2 6.5 6"/><path d="M16 5.5a3.5 3.5 0 0 1 0 6.5M18.5 14.5c1.6.9 2.6 2.8 3 5.5"/>',
   pipeline: '<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/>',
@@ -1409,29 +1443,137 @@ function releaseHold(deal, quiet) {
   deal.hold = null; deal.secured = false; if (!quiet) { log(deal, "Hold released."); save(); render(); }
 }
 
+/* ---------------- Workflow: steps = pipeline stages; every record has a workflow state, an assignee and a due time ---------------- */
+const WF_KINDS = { open: "Not started", active: "Active", waiting: "Waiting", blocked: "Blocked", done: "Done" };
+const WF_STATE_DEFAULTS = [
+  { id: "unassigned", label: "Unassigned", kind: "open", tone: "#8A94A0" },
+  { id: "assigned", label: "Assigned", kind: "open", tone: "#1D5FA8" },
+  { id: "inprogress", label: "In progress", kind: "active", tone: "#C9921A" },
+  { id: "waiting", label: "Waiting on customer", kind: "waiting", tone: "#8E4C9E" },
+  { id: "blocked", label: "Blocked", kind: "blocked", tone: "#A6362A" },
+  { id: "done", label: "Done", kind: "done", tone: "#23806A" },
+];
+const WF_TONES = ["#1D5FA8", "#C9921A", "#23806A", "#8E4C9E", "#A6362A", "#2F7FB8", "#D0602F", "#8A94A0", "#3E7D3A", "#B34F7B"];
+const WF_TPL = { subject: "{business}: {record} is assigned to you ({step})", body: "Hi {first},\n\n{record} just reached {step} and is assigned to you. Status: {state}.{due}\n\n{instructions}Open it in Blueprint CRM to keep it moving.\n\nBlueprint CRM" };
+const WF_OPS = { filled: "is filled in", empty: "is empty", eq: "is", ne: "is not", has: "contains", gte: "is at least", lte: "is at most", checked: "is checked" };
+const wfSlug = (s) => s.toLowerCase().replace(/\(.*?\)/g, "").replace(/[^a-z0-9]+/g, ".").replace(/^\.+|\.+$/g, "");
+function wfCfg(b) {
+  S.wf = S.wf || {};
+  const w = S.wf[b.id] = S.wf[b.id] || { states: WF_STATE_DEFAULTS.map(x => ({ ...x })), steps: {}, people: {}, rules: { inOrder: true, doneFirst: false, notifyReassign: true }, notices: [], rr: 0 };
+  b.stages.forEach((st, i) => { if (!w.steps[st]) { const end = i >= b.stages.length - 2; w.steps[st] = { assign: "owner", state: end ? "done" : "assigned", sla: end ? 0 : i === 0 ? 4 : 48, notify: !end, conds: [], instructions: "" }; } });
+  const dom = wfSlug(b.business).replace(/\./g, "") || "business";
+  b.team.forEach(t => { if (!(t in w.people)) w.people[t] = `${wfSlug(t.replace(/.*·\s*/, "")) || "team"}@${dom}.example`; });
+  return w;
+}
+const wfState = (w, id) => w.states.find(s => s.id === id) || w.states[0];
+const wfKind = (w, id) => wfState(w, id).kind;
+function wfOf(b, deal) {
+  const w = wfCfg(b);
+  if (!deal.wf || !w.states.some(s => s.id === deal.wf.state)) {
+    const i = b.stages.indexOf(deal.stage), end = i >= b.stages.length - 2, fresh = Date.now() - (deal.created || 0) < 600e3;
+    let h = 0; for (const c of String(deal.id)) h = (h * 31 + c.charCodeAt(0)) % 997;
+    const want = end ? "done" : fresh ? (w.steps[deal.stage]?.state || "assigned") : ["assigned", "inprogress", "inprogress", "waiting", "assigned", "blocked", "inprogress"][h % 7];
+    const sla = w.steps[deal.stage]?.sla, since = fresh ? Date.now() : Date.now() - (Math.floor(h / 7) % 10) / 10 * 1.6 * (sla || 24) * 3600e3; // sample records: about 3 in 10 run past their deadline
+    deal.wf = { state: w.states.some(s => s.id === want) ? want : w.states[0].id, assignee: deal.wf?.assignee ?? (deal.rep || b.team[0] || ""), since, due: sla && !end ? since + sla * 3600e3 : null };
+  }
+  return deal.wf;
+}
+const wfOverdue = (b, deal) => { const x = wfOf(b, deal); return !!(x.due && x.due < Date.now() && wfKind(wfCfg(b), x.state) !== "done"); };
+function wfFields(b) { return [["phone", "Phone", "phone"], ["email", "Email", "email"], ["zip", "ZIP", "text"], ["place", "Town", "text"], ...fieldsOf(b).filter(f => !f.hidden && f.type !== "multi").map(f => [f.key, f.label, f.type, f.options])]; }
+function wfChecks(b) { return [["@appt", `A ${b.schedule.what} is booked`], ["@call", "A call is logged"], ...(b.inventory !== "none" ? [["@hold", "It's held / reserved"]] : []), ["@assignee", "Someone is assigned"], ["@stepdone", "The current step is marked Done"]]; }
+function wfOpsFor(type) { return type === "checkbox" ? ["checked", "empty"] : type === "number" || type === "money" ? ["filled", "gte", "lte", "eq"] : type === "select" ? ["filled", "eq", "ne"] : ["filled", "empty", "eq", "ne", "has"]; }
+function condLabel(b, c) {
+  if (c.type === "check") return (wfChecks(b).find(x => x[0] === c.key) || [, c.key])[1];
+  const f = wfFields(b).find(x => x[0] === c.field), lab = f ? f[1] : c.field;
+  const v = f && f[3] ? (f[3].find(o => o[0] === c.value) || [, c.value])[1] : f && f[2] === "money" ? money(+c.value) : c.value;
+  return `${lab} ${WF_OPS[c.op] || c.op}${["filled", "empty", "checked"].includes(c.op) ? "" : ` “${v}”`}`;
+}
+function condMet(b, deal, c) {
+  if (c.type === "check") {
+    if (c.key === "@appt") return D().appts.some(a => a.dealId === deal.id);
+    if (c.key === "@call") return !!(deal.calls || []).length;
+    if (c.key === "@hold") return !!deal.hold;
+    if (c.key === "@assignee") return !!wfOf(b, deal).assignee;
+    if (c.key === "@stepdone") return wfKind(wfCfg(b), wfOf(b, deal).state) === "done";
+    return true;
+  }
+  const raw = ["phone", "email", "zip", "place"].includes(c.field) ? deal[c.field] : deal.f?.[c.field];
+  const filled = !(raw === "" || raw == null || raw === false || (Array.isArray(raw) && !raw.length)), s = String(raw ?? "").toLowerCase(), v = String(c.value ?? "").toLowerCase();
+  return { filled, empty: !filled, checked: !!raw, eq: s === v, ne: s !== v, has: filled && s.includes(v), gte: filled && +raw >= +c.value, lte: filled && +raw <= +c.value }[c.op] ?? true;
+}
+const wfFill = (t, vars) => t.replace(/\{(\w+)\}/g, (m, k) => vars[k] ?? m);
+function wfNotify(b, deal, who, stepName, reason) {
+  const w = wfCfg(b), step = w.steps[stepName] || {}, email = w.people[who] || "", x = wfOf(b, deal);
+  const vars = { business: b.business.replace(/ \(sample\)$/, ""), record: deal.name, step: stepName, first: who.split(/[ (·]/)[0], assignee: who, state: wfState(w, x.state).label,
+    due: x.due ? ` Due by ${new Date(x.due).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.` : "", instructions: step.instructions ? `What to do: ${step.instructions}\n\n` : "" };
+  const n = { id: "nt" + Date.now() + Math.random().toString(36).slice(2, 6), t: Date.now(), to: who, email, dealId: deal.id, step: stepName, reason, subject: wfFill(step.subject || WF_TPL.subject, vars), body: wfFill(step.body || WF_TPL.body, vars) };
+  w.notices.unshift(n); w.notices = w.notices.slice(0, 80);
+  log(deal, email ? `Email notification to ${who} (${email}): “${n.subject}”` : `${who} has no email on file, so no notification went out.`);
+  return n;
+}
+function enterStep(b, deal, to) {
+  const w = wfCfg(b), step = w.steps[to] || {}, i = b.stages.indexOf(to), end = i >= b.stages.length - 2, prev = deal.wf?.assignee;
+  let who = prev || deal.rep || "";
+  if (step.assign === "owner") who = deal.rep || who;
+  else if (step.assign === "round") who = b.team.length ? b.team[(w.rr++) % b.team.length] : who;
+  else if (step.assign === "none") who = "";
+  else if (String(step.assign).startsWith("person:")) who = step.assign.slice(7);
+  let st = step.state || "assigned"; if (!who && w.states.some(s => s.id === "unassigned") && !end) st = "unassigned";
+  deal.wf = { state: w.states.some(s => s.id === st) ? st : w.states[0].id, assignee: who, since: Date.now(), due: step.sla && !end ? Date.now() + step.sla * 3600e3 : null };
+  log(deal, `Workflow: ${to} · ${wfState(w, deal.wf.state).label}${who ? ` · assigned to ${who}` : " · unassigned"}.`);
+  if (who && step.notify) { const n = wfNotify(b, deal, who, to, "step"); return n; }
+  return null;
+}
+function assignLabel(b, a) { return a === "owner" ? "Record owner" : a === "round" ? "Round-robin" : a === "none" ? "Nobody (unassigned)" : String(a || "").startsWith("person:") ? a.slice(7) : "Record owner"; }
+function applyWfStages(b) {
+  const w = S.wf?.[b.id]; if (!w) return;
+  (w.renames || []).forEach(([o, n]) => {
+    ["stageTone", "phases", "stageHelp", "requires"].forEach(k => { if (b[k] && o in b[k] && !(n in b[k])) { b[k][n] = b[k][o]; delete b[k][o]; } });
+    if (b.soldAt === o) b.soldAt = n; if (b.installStages) b.installStages = b.installStages.map(s => s === o ? n : s);
+  });
+  if (w.stages) { const tones = ["#1D5FA8", "#C9921A", "#8E4C9E", "#2F7FB8", "#D0602F", "#3E7D3A"]; b.stages = w.stages.slice(); b.stages.forEach((s, i) => { if (!b.stageTone[s]) b.stageTone[s] = tones[i % tones.length]; }); } // runs at startup, before the WF_ constants exist
+}
+function wfSetStages(b, list, renames = []) {
+  const w = wfCfg(b); w.stages = list; w.renames = [...(w.renames || []), ...renames];
+  renames.forEach(([o, n]) => {
+    Object.values(S.data[b.id]?.deals || []).forEach(x => { if (x.stage === o) x.stage = n; });
+    if (w.steps[o]) { w.steps[n] = w.steps[o]; delete w.steps[o]; }
+    const c = cfgOf(b.id); if (c) { (c.added || []).forEach(f => { if (f.requiredAt === o) f.requiredAt = n; }); Object.values(c.ov || {}).forEach(v => { if (v.requiredAt === o) v.requiredAt = n; }); }
+    if (S.wfStep === o) S.wfStep = n;
+  });
+  applyWfStages(b); wfCfg(b);
+}
+function spill(w, id) { const z = wfState(w, id); return `<span class="spill" style="--t:${z.tone}">${esc(z.label)}</span>`; }
+
 /* ---------------- Stages ---------------- */
 function siteCheckDone(b, deal) { return deal.sitecheck && deal.sitecheck.length === b.siteCheck.length && deal.sitecheck.every(v => v != null); }
-function missingFor(deal, stage) {
-  const b = bp(), need = [];
+function gateItems(deal, stage) {
+  const b = bp(), items = [];
   requiresFor(b, stage).forEach(k => {
-    if (k === "@hold") { if (b.inventory !== "none" && !deal.hold) need.push(b.inventory === "capacity" ? "the date on hold" : b.inventory === "reseller" ? "a depot hold" : "a reservation"); }
-    else if (k === "@appt") { if (!D().appts.some(a => a.dealId === deal.id)) need.push(`a scheduled ${b.schedule.what}`); }
-    else if (k === "@install") { if (!D().appts.some(a => a.dealId === deal.id && a.kind === "install")) need.push("installation days on the calendar"); }
-    else if (k === "@structural") { if ((deal.f.current === "shingle" || (deal.f.current === "concrete" && ["spanish", "barrel2"].includes(deal.f.tile))) && !deal.f.structural) need.push("a structural review (clay weight)"); }
-    else if (k === "@call") { if (!(deal.calls || []).length) need.push("a logged call"); }
-    else if (k === "@sitecheck") { if (fulfillmentOf(b.id) === "delivery" && b.siteCheck.length && !siteCheckDone(b, deal)) need.push("a completed delivery check"); }
-    else { const f = fieldsOf(b).find(x => x.key === k); if (f && (!f.fulfillment || fulfillmentOf(b.id) === "delivery") && (deal.f[k] === "" || deal.f[k] == null || (f.type === "checkbox" && !deal.f[k]))) need.push(f.label.toLowerCase()); }
+    if (k === "@hold") { if (b.inventory !== "none") items.push({ label: b.inventory === "capacity" ? "the date on hold" : b.inventory === "reseller" ? "a depot hold" : "a reservation", ok: !!deal.hold }); }
+    else if (k === "@appt") items.push({ label: `a scheduled ${b.schedule.what}`, ok: D().appts.some(a => a.dealId === deal.id) });
+    else if (k === "@install") items.push({ label: "installation days on the calendar", ok: D().appts.some(a => a.dealId === deal.id && a.kind === "install") });
+    else if (k === "@structural") { if (deal.f.current === "shingle" || (deal.f.current === "concrete" && ["spanish", "barrel2"].includes(deal.f.tile))) items.push({ label: "a structural review (clay weight)", ok: !!deal.f.structural }); }
+    else if (k === "@call") items.push({ label: "a logged call", ok: !!(deal.calls || []).length });
+    else if (k === "@sitecheck") { if (fulfillmentOf(b.id) === "delivery" && b.siteCheck.length) items.push({ label: "a completed delivery check", ok: siteCheckDone(b, deal) }); }
+    else { const f = fieldsOf(b).find(x => x.key === k); if (f && (!f.fulfillment || fulfillmentOf(b.id) === "delivery")) items.push({ label: f.label.toLowerCase(), ok: !(deal.f[k] === "" || deal.f[k] == null || (f.type === "checkbox" && !deal.f[k])) }); }
   });
-  return need;
+  (wfCfg(b).steps[stage]?.conds || []).forEach(c => items.push({ label: condLabel(b, c), ok: condMet(b, deal, c), custom: true }));
+  return items;
 }
+function missingFor(deal, stage) { return gateItems(deal, stage).filter(x => !x.ok).map(x => x.label); }
 function setStage(deal, to) {
-  const b = bp(), from = b.stages.indexOf(deal.stage), j = b.stages.indexOf(to);
-  if (to !== lostStage(b) && j > from) for (let k = from + 1; k <= j; k++) { const need = missingFor(deal, b.stages[k]); if (need.length) return toast(`Can't move to ${b.stages[k]} yet: needs ${need.join(", ")}.`); }
+  const b = bp(), w = wfCfg(b), from = b.stages.indexOf(deal.stage), j = b.stages.indexOf(to);
+  if (to !== lostStage(b) && j > from) {
+    if (w.rules.doneFirst && wfKind(w, wfOf(b, deal).state) !== "done") return toast(`Mark “${deal.stage}” as ${w.states.find(z => z.kind === "done")?.label || "Done"} before moving on.`);
+    for (const st of (w.rules.inOrder ? b.stages.slice(from + 1, j + 1) : [to])) { const need = missingFor(deal, st); if (need.length) return toast(`Can't move to ${st} yet. Still needed: ${need.join(", ")}.`); }
+  }
   deal.stage = to; log(deal, `Moved to ${to}.`);
   if (to === lostStage(b)) releaseHold(deal, true);
   if (to === wonStage(b) && deal.hold) deal.secured = true;
   if (b.inventory === "capacity" && to === b.stages[b.stages.length - 2] && deal.hold) deal.secured = true;
-  save(); render();
+  const n = enterStep(b, deal, to);
+  save(); render(); if (n) toast(n.email ? `Moved to ${to}. ✉ Email to ${n.to.split(/[ (·]/)[0]} queued.` : `Moved to ${to}. Add an email for ${n.to} in Workflow to notify them.`);
 }
 
 /* ---------------- Scheduling ---------------- */
@@ -1455,7 +1597,7 @@ function book(deal, res, date, start) {
   d.appts.push({ id: "a" + Date.now(), dealId: deal.id, res, date, start, dur, kind: install ? "install" : "visit", title: `${install ? "Install · " : ""}${deal.name}${o ? " · " + o.name : ""}` });
   log(deal, `${b.schedule.book}: ${dayLabel(date)} ${fmtTime(start)} with ${b.schedule.resources[res]} (${dur} min).`);
   S.booking = null; S.day = date;
-  if (b.requires[b.stages[1]]?.includes("@appt") && deal.stage === b.stages[0] && !missingFor(deal, b.stages[1]).length) { deal.stage = b.stages[1]; log(deal, `Moved to ${b.stages[1]}.`); }
+  if (b.requires[b.stages[1]]?.includes("@appt") && deal.stage === b.stages[0] && !missingFor(deal, b.stages[1]).length) { deal.stage = b.stages[1]; log(deal, `Moved to ${b.stages[1]}.`); enterStep(b, deal, b.stages[1]); }
   save(); render(); toast(`Booked ${deal.name}: ${dayLabel(date)} at ${fmtTime(start)} with ${b.schedule.resources[res]}.`);
 }
 
@@ -1510,7 +1652,7 @@ function simulateMarketplace() {
   const f = {}; fieldsOf(b).forEach(x => f[x.key] = x.type === "multi" ? [] : x.key === "qty" ? 1 : ""); Object.assign(f, m[1]); if (b.id === "container") f.doors = "standard";
   const near = nearestDepot(b, place); if (near && fulfillmentOf(b.id) === "delivery") f.miles = Math.round(near.miles);
   const deal = { id: "n" + Date.now(), name: `${pick(FIRST)} ${pick(LAST)}`, place, source: "marketplace", rep: b.team[0], stage: b.stages[0], opens: 0, lastMsg: Date.now(), created: Date.now(), f, log: [], summary: `New Marketplace lead: "${m[0]}"` };
-  log(deal, `Marketplace: "${m[0]}"`); d.deals.unshift(deal); save();
+  log(deal, `Marketplace: "${m[0]}"`); d.deals.unshift(deal); enterStep(b, deal, deal.stage); save();
   toast(`New Marketplace message from ${deal.name} (${place}). Drafting a reply…`); draftReply(deal);
 }
 
@@ -1522,7 +1664,7 @@ function navItems() {
     b.inventory !== "none" ? ["inventory", { reseller: "Supplier stock", count: "Stock", rental: "Availability", capacity: "Date calendar" }[b.inventory]] : null,
     fm === "delivery" ? ["fulfillment", "Deliveries"] : null,
     b.adProducts.length ? ["marketing", "Marketplace ads"] : null,
-    ["askus", "Website chat"], ["ask", "Ask"], ["inbox", "Approvals"], ["blueprint", "Blueprint"], ["builder", "New Blueprint"]].filter(Boolean);
+    ["askus", "Website chat"], ["ask", "Ask"], ["inbox", "Approvals"], ["workflow", "Workflow"], ["blueprint", "Blueprint"], ["builder", "New Blueprint"]].filter(Boolean);
 }
 function renderNav() {
   const b = bp(), pending = S.drafts.filter(x => x.bp === b.id && x.status === "pending").length, items = navItems();
@@ -1641,11 +1783,11 @@ function viewLeads() {
 }
 
 function viewPipeline() {
-  const b = bp(), d = D();
-  return `${head("Pipeline", "Every " + b.dealWord.toLowerCase() + ", stage by stage", "Stages come from the Blueprint. Cards can't skip ahead until the stage's requirements are met.", `${repPicker(b)}<button class="btn primary" type="button" id="new-deal">+ New</button>`)}
-    <div class="board-wrap"><div class="board">${b.stages.map(st => { const cards = repDeals(d).filter(x => x.stage === st), tot = cards.reduce((a, x) => a + dealValue(price(b, x.f)), 0);
+  const b = bp(), d = D(), w = wfCfg(b); if (S.wfFilter && !w.states.some(z => z.id === S.wfFilter)) S.wfFilter = "";
+  return `${head("Pipeline", "Every " + b.dealWord.toLowerCase() + ", stage by stage", "Stages come from the Workflow. Cards can't move ahead until a step's conditions are met.", `<select class="btn" id="wf-filter" aria-label="Filter by status"><option value="">All statuses</option>${w.states.map(z => `<option value="${z.id}" ${S.wfFilter === z.id ? "selected" : ""}>${esc(z.label)}</option>`).join("")}<option value="@over" ${S.wfFilter === "@over" ? "selected" : ""}>Overdue</option></select>${repPicker(b)}<button class="btn primary" type="button" id="new-deal">+ New</button>`)}
+    <div class="board-wrap"><div class="board">${b.stages.map(st => { const cards = repDeals(d).filter(x => x.stage === st && (!S.wfFilter || (S.wfFilter === "@over" ? wfOverdue(b, x) : wfOf(b, x).state === S.wfFilter))), tot = cards.reduce((a, x) => a + dealValue(price(b, x.f)), 0);
       return `<section class="col" style="--stage:${b.stageTone[st]}">${b.phases?.[st] ? `<span class="phase">${esc(b.phases[st])}</span>` : ""}<h3><span>${esc(st)}${b.stageHelp[st] ? ` <small>${esc(b.stageHelp[st])}</small>` : ""}</span><small>${cards.length} · ${money(tot)}</small></h3>${cards.map(x => { const q = price(b, x.f), h = holdOf(x), a = apptOf(x);
-        return `<button type="button" class="card" data-open="${x.id}"><span class="t">${esc(x.name)}</span><span class="s">${esc(summary(b, x))}${x.place ? " · " + esc(x.place) : ""}</span>${x.summary ? `<span class="lead-sum">${esc(x.summary)}</span>` : ""}${fieldChips(b, x, "card") ? `<span class="fchips">${fieldChips(b, x, "card")}</span>` : ""}<span class="foot"><span class="num" style="font-weight:600;font-size:.86rem">${priceLabel(q) || '<span class="pill plain">Needs details</span>'}</span><span class="row" style="gap:4px">${x.source === "marketplace" ? '<span class="pill fb">FB</span>' : ""}${isHot(b, x) ? `<span class="pill hot">🔥${x.opens}</span>` : ""}${a ? `<span class="pill info">${dayLabel(a.date)}</span>` : ""}${h ? `<span class="pill ${h.status === "booked" ? "good" : "warn"}">${h.status === "booked" ? "✓" : hoursLeft(h.until) + "h"}</span>` : x.waitlist ? '<span class="pill bad">Waitlist</span>' : ""}</span></span></button>`; }).join("")}</section>`; }).join("")}</div></div>`;
+        return `<button type="button" class="card" data-open="${x.id}"><span class="t">${esc(x.name)}</span><span class="s">${esc(summary(b, x))}${x.place ? " · " + esc(x.place) : ""}</span>${x.summary ? `<span class="lead-sum">${esc(x.summary)}</span>` : ""}${fieldChips(b, x, "card") ? `<span class="fchips">${fieldChips(b, x, "card")}</span>` : ""}<span class="wfl">${spill(w, wfOf(b, x).state)}${x.wf.assignee ? `<span>👤 ${esc(x.wf.assignee.split(/[ (·]/)[0])}</span>` : ""}${wfOverdue(b, x) ? '<span style="color:var(--bad);font-weight:600">⏰ overdue</span>' : ""}</span><span class="foot"><span class="num" style="font-weight:600;font-size:.86rem">${priceLabel(q) || '<span class="pill plain">Needs details</span>'}</span><span class="row" style="gap:4px">${x.source === "marketplace" ? '<span class="pill fb">FB</span>' : ""}${isHot(b, x) ? `<span class="pill hot">🔥${x.opens}</span>` : ""}${a ? `<span class="pill info">${dayLabel(a.date)}</span>` : ""}${h ? `<span class="pill ${h.status === "booked" ? "good" : "warn"}">${h.status === "booked" ? "✓" : hoursLeft(h.until) + "h"}</span>` : x.waitlist ? '<span class="pill bad">Waitlist</span>' : ""}</span></span></button>`; }).join("")}</section>`; }).join("")}</div></div>`;
 }
 
 function viewSchedule() {
@@ -2087,7 +2229,7 @@ function chatCapture(b) {
     chat: c.msgs.filter(m => m.role === "user" || m.role === "bot").map(m => ({ role: m.role, text: m.text })) };
   log(deal, `Website chat transcript saved (${deal.chat.length} messages).${sms ? " SMS consent given." : ""}${emailOk ? " Email consent given." : ""}`);
   if (c.slot) log(deal, `Requested ${b.schedule.what}: ${dayLabel(c.slot.date)} at ${fmtTime(c.slot.start)} (needs confirmation).`);
-  d.deals.unshift(deal);
+  d.deals.unshift(deal); enterStep(b, deal, deal.stage);
   const first = name.split(" ")[0];
   S.drafts.unshift({ id: "d" + Date.now(), bp: b.id, dealId: deal.id, dealName: name, channel: sms ? "Text" : email ? "Email" : "Phone", kind: "reply", created: Date.now(), status: "pending", source: "Drafted from the website chat",
     text: c.slot ? `Hi ${first}, thanks for chatting with ${chatFill("{biz}", b)}! We can do ${dayLabel(c.slot.date)} at ${fmtTime(c.slot.start)} for your ${b.schedule.what}. Reply YES to confirm or suggest another time.` : `Hi ${first}, thanks for reaching out to ${chatFill("{biz}", b)}! ${questions[0] ? `About your question ("${questions[0].slice(0, 80)}"): ` : ""}[answer here]. What's a good time to talk?` });
@@ -2193,13 +2335,115 @@ function viewBlueprint() {
   const b = bp(), s = settingsFor(b.id), fm = fulfillmentOf(b.id);
   const modes = [["pickup", "No fulfillment", "Sell only: in store or customer pickup."], ["delivery", "Delivery", "Distance pricing, delivery checks, map, drop-offs."], ["onsite", "On-site / appointments", "Work happens at your place or theirs."]];
   const rows = [["Sells", x => x.kind.join(" · ")], ["Inventory", x => ({ reseller: "Reseller (supplier depots)", count: "Stock counts", rental: "Rental by date", capacity: "One per date", none: "None (services)" })[x.inventory]], ["Fulfillment", x => ({ pickup: "None / pickup", delivery: "Delivery", onsite: "On-site" })[fulfillmentOf(x.id)]], ["Pricing", x => ({ container: "Table + freight", venue: "Season × day + guests", cleaning: "Production rate", list: "Price list" })[x.pricing]], ["Scheduling", x => `${x.schedule.resources.length} ${x.schedule.byStaff ? "staff" : "resources"} · ${x.schedule.what}s`], ["Stages", x => x.stages.join(" → ")]];
-  const yaml = `blueprint: ${b.id}\nbusiness: "${b.business}"\ninventory: ${b.inventory}${b.supplier ? `\nsupplier: ${b.supplier}` : ""}\nfulfillment: ${fm}\npricing: ${b.pricing}\n${b.offerings ? `offerings:\n${b.offerings.map(o => `  - { name: "${o.name}", price: ${o.price}, unit: ${o.unit}${o.duration ? `, minutes: ${o.duration}` : ""}${o.stock != null ? `, stock: ${o.stock}` : ""} }`).join("\n")}\n` : ""}pipeline: [${b.stages.join(", ")}]\n${(cfgOf(b.id)?.added || []).length ? `custom_fields:\n${cfgOf(b.id).added.map(f => `  - { name: "${f.label}", type: ${f.type}${f.requiredAt ? `, required_before: "${f.requiredAt}"` : ""}${(cfgOf(b.id).archived || []).includes(f.key) ? ", removed: true" : ""} }`).join("\n")}\n` : ""}schedule:\n  resources: [${b.schedule.resources.join(", ")}]\n  hours: "${b.schedule.open}:00-${b.schedule.close}:00"\n  slot_minutes: ${b.schedule.slot}\nsettings:\n${b.settings.map(([k]) => `  ${k}: ${s[k]}`).join("\n")}${b.commission ? `\ncommission: external  # ${b.commission}` : ""}`;
+  const yaml = `blueprint: ${b.id}\nbusiness: "${b.business}"\ninventory: ${b.inventory}${b.supplier ? `\nsupplier: ${b.supplier}` : ""}\nfulfillment: ${fm}\npricing: ${b.pricing}\n${b.offerings ? `offerings:\n${b.offerings.map(o => `  - { name: "${o.name}", price: ${o.price}, unit: ${o.unit}${o.duration ? `, minutes: ${o.duration}` : ""}${o.stock != null ? `, stock: ${o.stock}` : ""} }`).join("\n")}\n` : ""}pipeline: [${b.stages.join(", ")}]\nworkflow:\n  statuses: [${wfCfg(b).states.map(z => `${z.label} (${z.kind})`).join(", ")}]\n${b.stages.map(st => { const x = wfCfg(b).steps[st]; return `  ${st}: { assign: ${assignLabel(b, x.assign)}, starts: ${wfState(wfCfg(b), x.state).label}, due_hours: ${x.sla || 0}, email: ${x.notify ? "yes" : "no"}${(x.conds || []).length ? `, conditions: [${x.conds.map(c => condLabel(b, c)).join("; ")}]` : ""} }`; }).join("\n")}\n${(cfgOf(b.id)?.added || []).length ? `custom_fields:\n${cfgOf(b.id).added.map(f => `  - { name: "${f.label}", type: ${f.type}${f.requiredAt ? `, required_before: "${f.requiredAt}"` : ""}${(cfgOf(b.id).archived || []).includes(f.key) ? ", removed: true" : ""} }`).join("\n")}\n` : ""}schedule:\n  resources: [${b.schedule.resources.join(", ")}]\n  hours: "${b.schedule.open}:00-${b.schedule.close}:00"\n  slot_minutes: ${b.schedule.slot}\nsettings:\n${b.settings.map(([k]) => `  ${k}: ${s[k]}`).join("\n")}${b.commission ? `\ncommission: external  # ${b.commission}` : ""}`;
   return `${head("Blueprint", b.name, "Everything that makes this business different lives here. Change an input and the whole CRM follows, no new code.", S.custom[b.id] ? '<button class="btn" type="button" id="del-bp">Delete this Blueprint</button>' : "")}
     <section class="panel"><div class="panel-title"><span>Fulfillment</span><span>module switch</span></div><div class="modes">${modes.map(([id, t, x]) => `<button class="mode" type="button" data-mode="${id}" aria-pressed="${fm === id}" ${b.fulfillmentOptions.includes(id) ? "" : "disabled"}><b>${esc(t)}</b><span>${esc(x)}</span></button>`).join("")}</div></section>
     <section class="panel"><div class="panel-title"><span>Inputs</span><button class="btn small" type="button" id="reset-settings">Reset</button></div><div class="fields">${b.settings.map(([k, l]) => `<div class="field"><label for="set-${k}">${esc(l)}</label><input id="set-${k}" type="text" inputmode="decimal" data-rule="${/hours|days|opens|radius|volumeBreak/i.test(k) ? "digits" : "decimal"}" data-min="0" ${/pct/i.test(k) ? 'data-max="100"' : ""} value="${s[k]}" data-setting="${k}"></div>`).join("")}</div></section>
     ${fieldEditor(b)}
     <section class="panel"><div class="panel-title"><span>Same building blocks, every business</span></div><div class="table-wrap"><table class="compare"><thead><tr><th>Block</th>${Object.values(BLUEPRINTS).map(x => `<th>${esc(x.short)}</th>`).join("")}</tr></thead><tbody>${rows.map(([n, fn]) => `<tr><td>${n}</td>${Object.values(BLUEPRINTS).map(x => `<td class="${x.id === b.id ? "cur" : ""}">${esc(fn(x))}</td>`).join("")}</tr>`).join("")}</tbody></table></div></section>
     <section class="panel"><div class="panel-title"><span>Blueprint file</span></div><pre class="bp-yaml">${esc(yaml)}</pre></section>`;
+}
+
+/* ---------------- Workflow builder view ---------------- */
+function viewWorkflow() {
+  const b = bp(), d = D(), w = wfCfg(b), sel = b.stages.includes(S.wfStep) ? S.wfStep : b.stages[0], step = w.steps[sel], si = b.stages.indexOf(sel), nEnd = b.stages.length - 2, end = si >= nEnd, dw = b.dealWord.toLowerCase();
+  d.deals.forEach(x => wfOf(b, x));
+  const flow = b.stages.map((st, i) => {
+    const here = d.deals.filter(x => x.stage === st), s = w.steps[st], gates = requiresFor(b, st).length + (s.conds || []).length;
+    const counts = w.states.map(z => [z, here.filter(x => x.wf.state === z.id).length]).filter(([, n]) => n), over = here.filter(x => wfOverdue(b, x)).length;
+    return `${i ? `<span class="farrow" aria-hidden="true">${i === nEnd + 1 ? "⤷" : "→"}</span>` : ""}<button type="button" class="fstep" data-wfstep="${esc(st)}" aria-pressed="${st === sel}" style="--stage:${b.stageTone[st]}">
+      <span class="fnum">Step ${i + 1}${i === nEnd ? " · won" : i === nEnd + 1 ? " · lost" : ""}</span><b>${esc(st)}</b>
+      <span class="fmeta">👤 ${esc(assignLabel(b, s.assign))}${s.sla && i < nEnd ? ` · ⏱ ${s.sla} h` : ""}</span>
+      <span class="fmeta">${gates ? `🔒 ${gates} condition${gates > 1 ? "s" : ""}` : "🔓 no conditions"} · ${s.notify ? "✉ emails" : "✉ off"}</span>
+      <span class="fbar">${counts.map(([z, n]) => `<i style="flex:${n};background:${z.tone}" title="${esc(z.label)}: ${n}"></i>`).join("") || "<i style='flex:1;background:var(--line)'></i>"}</span>
+      <span class="fmeta">${here.length} ${esc(dw)}${here.length === 1 ? "" : "s"}${over ? ` · <b style="color:var(--bad)">${over} overdue</b>` : ""}</span></button>`; }).join("");
+  const nw = S.wfNew || (S.wfNew = { what: "phone", op: "filled", value: "" });
+  const fld = wfFields(b).find(x => x[0] === nw.what), isCheck = nw.what.startsWith("@"), ops = isCheck ? [] : wfOpsFor(fld ? fld[2] : "text");
+  if (!isCheck && !ops.includes(nw.op)) nw.op = ops[0];
+  const needsVal = !isCheck && !["filled", "empty", "checked"].includes(nw.op);
+  const valInput = !needsVal ? "" : fld && fld[3] ? `<select id="wfc-val" aria-label="Value">${fld[3].map(o => `<option value="${esc(o[0])}" ${nw.value === o[0] ? "selected" : ""}>${esc(o[1])}</option>`).join("")}</select>`
+    : `<input id="wfc-val" aria-label="Value" maxlength="40" ${fld && (fld[2] === "number" || fld[2] === "money") ? 'data-rule="decimal" inputmode="decimal"' : 'data-rule="label"'} value="${esc(nw.value)}" placeholder="value">`;
+  const builtin = requiresFor(b, sel).map(k => { const lab = k.startsWith("@") ? ({ "@hold": "It's held / reserved", "@appt": `A ${b.schedule.what} is booked`, "@install": "Installation days are on the calendar", "@structural": "Structural review done (if needed)", "@call": "A call is logged", "@sitecheck": "Delivery check completed" })[k] || k : `${(fieldsOf(b).find(f => f.key === k) || { label: k }).label} is filled in`; return `<div class="cond"><span>🔒 ${esc(lab)}</span><span class="muted" style="font-size:.74rem">from the Blueprint</span></div>`; }).join("");
+  const custom = (step.conds || []).map((c, k) => `<div class="cond"><span>✅ ${esc(condLabel(b, c))}</span><button class="btn small" type="button" data-cdel="${k}" aria-label="Remove condition">✕</button></div>`).join("");
+  const inUse = (id) => d.deals.some(x => x.wf?.state === id) || Object.values(w.steps).some(s => s.state === id);
+  const people = b.team.map(t => { const mine = d.deals.filter(x => x.wf.assignee === t && wfKind(w, x.wf.state) !== "done"), over = mine.filter(x => wfOverdue(b, x)).length, blocked = mine.filter(x => wfKind(w, x.wf.state) === "blocked").length;
+    return `<div class="queue"><div class="row" style="justify-content:space-between"><b>${esc(t)}</b><span class="muted" style="font-size:.8rem">${mine.length} open${over ? ` · <b style="color:var(--bad)">${over} overdue</b>` : ""}${blocked ? ` · ${blocked} blocked` : ""}</span></div>
+      ${mine.sort((a, c) => (a.wf.due || 9e15) - (c.wf.due || 9e15)).slice(0, 4).map(x => `<button type="button" class="qitem" data-open="${x.id}"><span>${esc(x.name)} <span class="muted">· ${esc(x.stage)}</span></span>${spill(w, x.wf.state)}${x.wf.due ? `<span class="num" style="font-size:.74rem;color:${wfOverdue(b, x) ? "var(--bad)" : "var(--muted)"}">${wfOverdue(b, x) ? "overdue" : "due " + shortDate(x.wf.due)}</span>` : ""}</button>`).join("") || '<span class="muted" style="font-size:.82rem">Nothing assigned.</span>'}</div>`; }).join("");
+  return `${head("Workflow", `How every ${dw} moves through ${b.business.replace(/ \(sample\)$/, "")}`, `Each step has an owner, a status and a deadline. Conditions stop a ${dw} from moving on until they're met, and whoever it's assigned to gets an email.`)}
+    <section class="panel"><div class="panel-title"><span>The flow</span><span>click a step to edit it</span></div><div class="flow">${flow}</div>
+      <div class="legend" style="margin-top:10px">${w.states.map(z => `<span><i style="background:${z.tone}"></i>${esc(z.label)}</span>`).join("")}</div></section>
+    <div class="split">
+      <section class="panel stack" style="border-left:4px solid ${b.stageTone[sel]}">
+        <div class="panel-title"><span>Step ${si + 1} · ${esc(sel)}</span><span class="row" style="gap:6px">${!end && si > 0 ? '<button class="btn small" type="button" id="wf-left" aria-label="Move step earlier">◀</button>' : ""}${!end && si < nEnd - 1 ? '<button class="btn small" type="button" id="wf-right" aria-label="Move step later">▶</button>' : ""}</span></div>
+        <div class="fields">
+          <div class="field"><label for="wf-name">Step name</label><input id="wf-name" data-rule="label" maxlength="30" value="${esc(sel)}"></div>
+          <div class="field"><label for="wf-assign">Assign to</label><select id="wf-assign">${[["owner", "Record owner (Handled by)"], ["round", "Round-robin across the team"], ...b.team.map(t => ["person:" + t, t]), ["none", "Nobody (leave unassigned)"]].map(([v, l]) => `<option value="${esc(v)}" ${step.assign === v ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></div>
+          <div class="field"><label for="wf-start">Status when it arrives</label><select id="wf-start">${w.states.map(z => `<option value="${z.id}" ${step.state === z.id ? "selected" : ""}>${esc(z.label)}</option>`).join("")}</select></div>
+          ${end ? "" : `<div class="field"><label for="wf-sla">Due within (hours; 0 = no deadline)</label><input id="wf-sla" type="text" inputmode="numeric" data-rule="digits" data-min="0" data-max="2000" maxlength="4" value="${step.sla || 0}"></div>`}
+        </div>
+        <div class="field"><label for="wf-instr">Instructions for the person assigned</label><textarea id="wf-instr" rows="2" maxlength="400" placeholder="e.g. Call within 2 hours, confirm the service and send the deposit link.">${esc(step.instructions || "")}</textarea></div>
+        <label class="ckline"><input type="checkbox" id="wf-notify" ${step.notify ? "checked" : ""}> Email the person assigned when a ${esc(dw)} reaches this step</label>
+        ${step.notify ? `<details class="wfmail"><summary>Email wording</summary><div class="stack" style="gap:8px;margin-top:8px"><div class="field"><label for="wf-subj">Subject</label><input id="wf-subj" maxlength="120" value="${esc(step.subject || WF_TPL.subject)}"></div><div class="field"><label for="wf-body">Message</label><textarea id="wf-body" rows="6" maxlength="1200">${esc(step.body || WF_TPL.body)}</textarea></div><span class="muted" style="font-size:.76rem">Fill-ins: {record} {step} {first} {assignee} {state} {due} {instructions} {business}</span></div></details>` : ""}
+        <div><div class="panel-title"><span>Conditions to enter this step</span><span>all must be met</span></div>
+          <div class="stack" style="gap:6px">${builtin}${custom}${!builtin && !custom ? `<p class="muted" style="font-size:.84rem">No conditions: a ${esc(dw)} can move here anytime.</p>` : ""}</div>
+          <div class="condadd"><select id="wfc-what" aria-label="What to check"><optgroup label="A field">${wfFields(b).map(x => `<option value="${esc(x[0])}" ${nw.what === x[0] ? "selected" : ""}>${esc(x[1])}</option>`).join("")}</optgroup><optgroup label="Something done">${wfChecks(b).map(x => `<option value="${x[0]}" ${nw.what === x[0] ? "selected" : ""}>${esc(x[1])}</option>`).join("")}</optgroup></select>
+            ${ops.length ? `<select id="wfc-op" aria-label="Rule">${ops.map(o => `<option value="${o}" ${nw.op === o ? "selected" : ""}>${WF_OPS[o]}</option>`).join("")}</select>` : ""}${valInput}
+            <button class="btn small primary" type="button" id="wfc-add">+ Add condition</button></div></div>
+        <div class="row">${!end ? '<button class="btn small" type="button" id="wf-add">+ Add a step after this one</button>' : ""}${!end && nEnd > 1 ? '<button class="btn small" type="button" id="wf-del">Delete this step</button>' : ""}${end ? `<span class="muted" style="font-size:.8rem">The last two steps are the won and lost outcomes. You can rename them, but they stay last.</span>` : ""}</div>
+      </section>
+      <div class="stack">
+        <section class="panel stack"><div class="panel-title"><span>Statuses</span><span>used on every step</span></div>
+          ${w.states.map((z, k) => `<div class="srow"><button type="button" class="stone" data-stone="${k}" style="background:${z.tone}" aria-label="Change color of ${esc(z.label)}"></button><input data-slabel="${k}" data-rule="label" maxlength="24" value="${esc(z.label)}" aria-label="Status name"><select data-skind="${k}" aria-label="Kind">${Object.entries(WF_KINDS).map(([v, l]) => `<option value="${v}" ${z.kind === v ? "selected" : ""}>${l}</option>`).join("")}</select><span class="row" style="gap:2px"><button class="btn small" type="button" data-sup="${k}" ${k ? "" : "disabled"} aria-label="Move up">↑</button><button class="btn small" type="button" data-sdel="${k}" ${inUse(z.id) || w.states.length <= 2 ? `disabled title="In use"` : ""} aria-label="Delete status">✕</button></span></div>`).join("")}
+          <button class="btn small" type="button" id="wf-sadd">+ Add a status</button>
+          <p class="muted" style="font-size:.76rem">Kinds drive behavior: <b>Done</b> satisfies “marked Done” conditions and stops the deadline clock; <b>Blocked</b> shows red and is counted on the team queue.</p></section>
+        <section class="panel stack"><div class="panel-title"><span>Rules</span></div>
+          <label class="ckline"><input type="checkbox" data-wfrule="inOrder" ${w.rules.inOrder ? "checked" : ""}> Steps go in order (can't skip a step's conditions)</label>
+          <label class="ckline"><input type="checkbox" data-wfrule="doneFirst" ${w.rules.doneFirst ? "checked" : ""}> A step must be marked Done before moving to the next</label>
+          <label class="ckline"><input type="checkbox" data-wfrule="notifyReassign" ${w.rules.notifyReassign ? "checked" : ""}> Email someone when a ${esc(dw)} is reassigned to them</label></section>
+        <section class="panel stack"><div class="panel-title"><span>Team emails</span><span>who gets notified</span></div>
+          ${b.team.map(t => `<div class="field"><label for="pe-${wfSlug(t)}">${esc(t)}</label><input id="pe-${wfSlug(t)}" type="email" inputmode="email" data-rule="email" data-pemail="${esc(t)}" value="${esc(w.people[t] || "")}" placeholder="name@company.com"></div>`).join("")}</section>
+      </div>
+    </div>
+    <div class="split">
+      <section class="panel stack"><div class="panel-title"><span>Team queue</span><span>open work by person</span></div>${people}</section>
+      <section class="panel stack"><div class="panel-title"><span>Email notifications</span><span>${w.notices.length}</span></div>
+        ${w.notices.slice(0, 12).map(n => `<details class="notice"><summary><span><b>${esc(n.to.split(/[ (·]/)[0])}</b> · ${esc(n.subject)}</span><span class="muted num" style="font-size:.74rem">${new Date(n.t).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span></summary><pre class="nbody">To: ${esc(n.email || "(no email on file)")}\n\n${esc(n.body)}</pre>${n.email ? `<a class="btn small" href="mailto:${encodeURIComponent(n.email)}?subject=${encodeURIComponent(n.subject)}&body=${encodeURIComponent(n.body)}">✉ Open in my email</a>` : ""}</details>`).join("") || `<p class="muted" style="font-size:.84rem">None yet. Move a ${esc(dw)} to a step and the person assigned is emailed.</p>`}
+        <p class="muted" style="font-size:.76rem">Prototype: notifications are written here and can be opened in your email. In the build they send automatically from your business email.</p></section>
+    </div>`;
+}
+function wireWorkflow() {
+  const b = bp(), w = wfCfg(b), sel = b.stages.includes(S.wfStep) ? S.wfStep : b.stages[0], step = w.steps[sel], si = b.stages.indexOf(sel), nEnd = b.stages.length - 2;
+  const main = $("main"), on = (q, fn) => main.querySelectorAll(q).forEach(fn), byId = (id, fn) => { const el = $(id); if (el) fn(el); }, done = (msg) => { save(); render(); if (msg) toast(msg); };
+  on("[data-wfstep]", x => x.onclick = () => { S.wfStep = x.dataset.wfstep; done(); });
+  byId("wf-name", el => el.onchange = () => { const n = el.value.trim().replace(/\s+/g, " "); if (!n || n === sel) return; if (b.stages.includes(n)) { el.value = sel; return toast(`There's already a step called ${n}.`); } wfSetStages(b, b.stages.map(s => s === sel ? n : s), [[sel, n]]); S.wfStep = n; done(`Renamed to ${n}. Records in this step moved with it.`); });
+  byId("wf-assign", el => el.onchange = () => { step.assign = el.value; done(`${sel}: assigned to ${assignLabel(b, el.value)}.`); });
+  byId("wf-start", el => el.onchange = () => { step.state = el.value; done(); });
+  byId("wf-sla", el => el.onchange = () => { step.sla = Math.max(0, Math.min(2000, +el.value || 0)); done(); });
+  byId("wf-instr", el => el.onchange = () => { step.instructions = el.value.replace(/[\u0000-\u0008\u000B-\u001F]/g, "").trim(); done(); });
+  byId("wf-notify", el => el.onchange = () => { step.notify = el.checked; done(); });
+  byId("wf-subj", el => el.onchange = () => { step.subject = el.value.trim() || WF_TPL.subject; done(); });
+  byId("wf-body", el => el.onchange = () => { step.body = el.value.trim() || WF_TPL.body; done(); });
+  byId("wfc-what", el => el.onchange = () => { S.wfNew = { what: el.value, op: "", value: "" }; done(); });
+  byId("wfc-op", el => el.onchange = () => { S.wfNew.op = el.value; done(); });
+  byId("wfc-add", el => el.onclick = () => { const nw = S.wfNew, val = $("wfc-val") ? $("wfc-val").value.trim() : "";
+    if ($("wfc-val") && !val) return flagInput($("wfc-val"), "Enter a value");
+    const c = nw.what.startsWith("@") ? { type: "check", key: nw.what } : { type: "field", field: nw.what, op: nw.op || "filled", value: val };
+    step.conds = [...(step.conds || []), c]; S.wfNew = { what: nw.what, op: nw.op, value: "" }; done(`Condition added to ${sel}: ${condLabel(b, c)}.`); });
+  on("[data-cdel]", x => x.onclick = () => { step.conds.splice(+x.dataset.cdel, 1); done("Condition removed."); });
+  byId("wf-left", el => el.onclick = () => { const s = b.stages.slice(); [s[si - 1], s[si]] = [s[si], s[si - 1]]; wfSetStages(b, s); done(); });
+  byId("wf-right", el => el.onclick = () => { const s = b.stages.slice(); [s[si + 1], s[si]] = [s[si], s[si + 1]]; wfSetStages(b, s); done(); });
+  byId("wf-add", el => el.onclick = () => { let n = "New step", k = 2; while (b.stages.includes(n)) n = `New step ${k++}`; const s = b.stages.slice(); s.splice(si + 1, 0, n); wfSetStages(b, s); S.wfStep = n; done(`Added “${n}”. Give it a name and conditions.`); });
+  byId("wf-del", el => el.onclick = () => { if (!el.dataset.confirm) { el.dataset.confirm = 1; el.textContent = "Click again to delete"; return; }
+    const to = b.stages[si > 0 ? si - 1 : si + 1], moved = D().deals.filter(x => x.stage === sel); moved.forEach(x => { x.stage = to; log(x, `Workflow step “${sel}” was deleted; moved to ${to}.`); });
+    wfSetStages(b, b.stages.filter(s => s !== sel)); delete w.steps[sel]; S.wfStep = to; done(`Deleted “${sel}”.${moved.length ? ` ${moved.length} moved to ${to}.` : ""}`); });
+  on("[data-stone]", x => x.onclick = () => { const z = w.states[+x.dataset.stone]; z.tone = WF_TONES[(WF_TONES.indexOf(z.tone) + 1) % WF_TONES.length]; done(); });
+  on("[data-slabel]", x => x.onchange = () => { const v = x.value.trim(); if (v) w.states[+x.dataset.slabel].label = v; done(); });
+  on("[data-skind]", x => x.onchange = () => { w.states[+x.dataset.skind].kind = x.value; done(); });
+  on("[data-sup]", x => x.onclick = () => { const k = +x.dataset.sup; [w.states[k - 1], w.states[k]] = [w.states[k], w.states[k - 1]]; done(); });
+  on("[data-sdel]", x => x.onclick = () => { w.states.splice(+x.dataset.sdel, 1); done("Status removed."); });
+  byId("wf-sadd", el => el.onclick = () => { w.states.push({ id: "s" + Date.now().toString(36), label: "New status", kind: "active", tone: WF_TONES[w.states.length % WF_TONES.length] }); done("Status added. Rename it and pick its kind."); });
+  on("[data-wfrule]", x => x.onchange = () => { w.rules[x.dataset.wfrule] = x.checked; done(); });
+  on("[data-pemail]", x => x.onchange = () => { const v = x.value.trim(); if (v && !/^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/.test(v)) return flagInput(x, "Enter an email like name@company.com"); w.people[x.dataset.pemail] = v; done(`Email saved for ${x.dataset.pemail}.`); });
 }
 
 /* ---------------- Blueprint builder ---------------- */
@@ -2280,6 +2524,13 @@ function renderDrawer() {
         <button class="btn" type="button" id="draft">✨ Draft reply</button>
         ${isOpen(b, deal) ? `<button class="btn" type="button" id="lost">${esc(lostStage(b))}</button>` : ""}
       </div>
+      ${(() => { const w = wfCfg(b), x = wfOf(b, deal), nxt = i < b.stages.length - 2 ? b.stages[i + 1] : null, g = nxt ? gateItems(deal, nxt) : [], od = wfOverdue(b, deal), stp = w.steps[deal.stage] || {};
+        return `<div class="wfbox ${od ? "over" : ""}"><div class="row" style="justify-content:space-between"><b style="font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Workflow · ${esc(deal.stage)}</b><span style="font-size:.8rem;${od ? "color:var(--bad);font-weight:600" : "color:var(--muted)"}">${x.due ? (od ? "⏰ Overdue since " : "Due ") + new Date(x.due).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "No deadline"}</span></div>
+          <div class="fields"><div class="field"><label for="wf-dstate">Status</label><select id="wf-dstate">${w.states.map(z => `<option value="${z.id}" ${x.state === z.id ? "selected" : ""}>${esc(z.label)}</option>`).join("")}</select></div>
+            <div class="field"><label for="wf-dwho">Assigned to</label><select id="wf-dwho"><option value="">Unassigned</option>${b.team.map(t => `<option ${x.assignee === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></div>
+            ${!w.rules.inOrder ? `<div class="field"><label for="wf-djump">Move to step</label><select id="wf-djump">${b.stages.map(st => `<option ${st === deal.stage ? "selected" : ""}>${esc(st)}</option>`).join("")}</select></div>` : ""}</div>
+          ${stp.instructions ? `<p style="font-size:.86rem">📋 ${esc(stp.instructions)}</p>` : ""}
+          ${nxt ? `<div><div class="muted" style="font-size:.78rem;margin-bottom:4px">To move to <b>${esc(nxt)}</b>:${!g.length && !w.rules.doneFirst ? " nothing required" : ""}</div><ul class="gate">${w.rules.doneFirst ? `<li class="${wfKind(w, x.state) === "done" ? "ok" : "no"}">This step is marked ${esc(w.states.find(z => z.kind === "done")?.label || "Done")}</li>` : ""}${g.map(it => `<li class="${it.ok ? "ok" : "no"}">${esc(it.label.charAt(0).toUpperCase() + it.label.slice(1))}</li>`).join("")}</ul></div>` : ""}</div>`; })()}
       ${a ? `<p class="alert info">📅 ${esc(b.schedule.book.replace(/^(Book|Schedule) /, ""))}: <b>${dayLabel(a.date)} at ${fmtTime(a.start)}</b> with ${esc(b.schedule.resources[a.res])} (${a.dur} min)</p>` : ""}
       ${h ? `<p class="alert ${h.status === "booked" ? "good" : "warn"}">${h.status === "booked" ? "Secured" : "On hold"}: <b>${esc(h.label)}</b>${h.status === "held" && h.until ? ` · ${hoursLeft(h.until)} hours left` : ""}</p>` : deal.waitlist ? `<p class="alert bad">Waitlisted for ${fmtDate(deal.waitlist)}: the date is taken, so a double booking was blocked.</p>` : ""}
       <div><div class="panel-title"><span>Customer</span></div><div class="fields">
@@ -2310,6 +2561,9 @@ function renderDrawer() {
     </div>`;
   $("drawer").hidden = false; $("scrim").hidden = false;
   $("close-drawer").onclick = closeDrawer;
+  $("wf-dstate").onchange = (e) => { const w = wfCfg(b), x = wfOf(b, deal); x.state = e.target.value; log(deal, `Status: ${wfState(w, x.state).label}.`); save(); render(); };
+  $("wf-dwho").onchange = (e) => { const w = wfCfg(b), x = wfOf(b, deal), who = e.target.value; x.assignee = who; if (who && w.states.some(z => z.id === "assigned") && x.state === "unassigned") x.state = "assigned"; log(deal, who ? `Reassigned to ${who}.` : "Unassigned."); const n = who && w.rules.notifyReassign ? wfNotify(b, deal, who, deal.stage, "reassigned") : null; save(); render(); toast(n ? (n.email ? `Assigned to ${who}. ✉ Email to ${n.email} queued.` : `Assigned to ${who}. Add their email in Workflow to notify them.`) : who ? `Assigned to ${who}.` : "Unassigned."); };
+  $("wf-djump") && ($("wf-djump").onchange = (e) => setStage(deal, e.target.value));
   $("back").onclick = () => setStage(deal, b.stages[i - 1]);
   $("fwd").onclick = () => setStage(deal, b.stages[i + 1]);
   $("bookit").onclick = () => { if (a) { D().appts = D().appts.filter(x => x.id !== a.id); log(deal, "Appointment removed to reschedule."); } S.booking = deal.id; S.view = "schedule"; const n = findNext(b, D(), durationFor(b, deal), preferredRes(b, deal)); S.day = n ? n.date : TODAY; closeDrawer(); save(); render(); };
@@ -2336,7 +2590,7 @@ function renderDrawer() {
     if (days) deal.followUp = Date.now() + days * DAY;
     log(deal, `Call: ${label}${days ? ` · follow-up set for ${shortDate(deal.followUp)}` : ""}`);
     if (k === "notint") { save(); return setStage(deal, lostStage(b)); }
-    if (deal.stage === b.stages[0] && b.requires[b.stages[1]]?.includes("@call")) { deal.stage = b.stages[1]; log(deal, `Moved to ${b.stages[1]}.`); }
+    if (deal.stage === b.stages[0] && b.requires[b.stages[1]]?.includes("@call")) { deal.stage = b.stages[1]; log(deal, `Moved to ${b.stages[1]}.`); enterStep(b, deal, b.stages[1]); }
     save(); render(); toast(`Call logged: ${label}.`); });
   $("drawer").querySelectorAll("[data-fieldcb]").forEach(el => el.onchange = () => { deal.f[el.dataset.fieldcb] = el.checked; save(); render(); });
   $("drawer").querySelectorAll("[data-addon]").forEach(el => el.onchange = () => { const set = new Set(deal.f.addons || []); el.checked ? set.add(el.dataset.addon) : set.delete(el.dataset.addon); deal.f.addons = [...set]; save(); render(); });
@@ -2345,7 +2599,7 @@ function renderDrawer() {
 function newDeal() {
   const b = bp(), d = D(), f = {}; fieldsOf(b).forEach(x => f[x.key] = x.type === "multi" ? [] : x.key === "qty" ? 1 : "");
   const deal = { id: "n" + Date.now(), name: "New " + b.dealWord.toLowerCase(), place: "", source: "phone", rep: b.team[0], stage: b.stages[0], opens: 0, lastMsg: Date.now(), created: Date.now(), f, log: [], summary: "" };
-  log(deal, "Created by hand."); d.deals.unshift(deal); save(); render(); openDrawer(deal.id); setTimeout(() => { const el = $("f-name"); if (el) { el.focus(); el.select(); } }, 0);
+  log(deal, "Created by hand."); d.deals.unshift(deal); enterStep(b, deal, deal.stage); save(); render(); openDrawer(deal.id); setTimeout(() => { const el = $("f-name"); if (el) { el.focus(); el.select(); } }, 0);
 }
 
 /* ---------------- Render ---------------- */
@@ -2356,7 +2610,7 @@ function render() {
   $("bp-kind").innerHTML = [...b.kind, ({ pickup: "No delivery", delivery: "Delivery", onsite: "On-site" })[fulfillmentOf(b.id)]].map((k, n) => `<span class="pill ${n === 2 ? "info" : "plain"}">${esc(k)}</span>`).join("");
   $("titleblock").innerHTML = `<div>Blueprint<b>${esc(b.short.toLowerCase())}</b></div><div>Rev<b>0.5.${Object.keys(S.settings[b.id] || {}).length + (cfgOf(b.id)?.history.length || 0)}</b></div><div>Inventory<b>${esc(b.inventory)}</b></div><div>Fulfillment<b>${esc(fulfillmentOf(b.id))}</b></div>`;
   renderNav();
-  const views = { askus: viewAskUs, today: viewToday, leads: viewLeads, pipeline: viewPipeline, schedule: viewSchedule, map: viewMap, inventory: viewInventory, fulfillment: viewFulfillment, marketing: viewMarketing, ask: viewAsk, inbox: viewInbox, blueprint: viewBlueprint, builder: viewBuilder };
+  const views = { askus: viewAskUs, today: viewToday, leads: viewLeads, pipeline: viewPipeline, schedule: viewSchedule, map: viewMap, inventory: viewInventory, fulfillment: viewFulfillment, marketing: viewMarketing, ask: viewAsk, inbox: viewInbox, workflow: viewWorkflow, blueprint: viewBlueprint, builder: viewBuilder };
   const main = $("main"); main.innerHTML = `<div class="fade" style="display:flex;flex-direction:column;gap:16px">${views[S.view]()}</div>`;
   const on = (sel, fn) => main.querySelectorAll(sel).forEach(fn);
   on("[data-open]", x => { x.onclick = () => openDrawer(x.dataset.open); x.onkeydown = (e) => { if (e.key === "Enter") openDrawer(x.dataset.open); }; });
@@ -2388,6 +2642,8 @@ function render() {
   byId("book-next", el => el.onclick = () => { const deal = D().deals.find(y => y.id === S.booking), n = findNext(b, D(), durationFor(b, deal), preferredRes(b, deal)); if (!n) return toast("No open times in the next two weeks."); book(deal, n.res, n.date, n.start); });
   byId("book-cancel", el => el.onclick = () => { S.booking = null; save(); render(); });
   if (S.view === "blueprint") wireFieldEditor(b);
+  if (S.view === "workflow") wireWorkflow();
+  byId("wf-filter", el => el.onchange = () => { S.wfFilter = el.value; save(); render(); });
   if (S.view === "askus") {
     on("[data-chip]", x => x.onclick = () => chatSend(b, x.dataset.chip));
     byId("chat-form", el => el.onsubmit = (e) => { e.preventDefault(); const v = $("chat-in").value; $("chat-in").value = ""; chatSend(b, v); });
