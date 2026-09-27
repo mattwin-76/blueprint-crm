@@ -406,6 +406,29 @@
   .depot { display: flex; flex-direction: column; align-items: center; line-height: 1; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.45)); }
   .depot span { margin-top: 2px; font: 700 10px/1 "JetBrains Mono", monospace; color: #1A1204; background: var(--accent); padding: 2px 4px; border-radius: 4px; }
   .depot.on span { background: var(--ink); color: var(--panel); }
+  .rpill { display: inline-block; font-size: .68rem; font-weight: 700; letter-spacing: .02em; padding: 1px 7px; border-radius: 999px; color: var(--t); background: color-mix(in srgb, var(--t) 13%, transparent); border: 1px solid color-mix(in srgb, var(--t) 35%, transparent); white-space: nowrap; }
+  .av { width: 34px; height: 34px; flex: none; border-radius: 50%; display: grid; place-items: center; font: 700 .78rem/1 "JetBrains Mono", monospace; color: #fff; background: var(--t); }
+  .av.sm { width: 26px; height: 26px; font-size: .64rem; }
+  .whoami { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; display: grid; grid-template-columns: auto 1fr; gap: 8px 10px; align-items: center; box-shadow: var(--shadow); }
+  .whoami .who-t { display: flex; flex-direction: column; gap: 3px; min-width: 0; align-items: flex-start; }
+  .whoami .who-t b { font-size: .88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .whoami .btn { grid-column: 1 / -1; justify-content: center; }
+  #login { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
+  #login[hidden] { display: none; }
+  .login-card { width: min(560px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+  .login-card .field input, .login-card .field select { padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--panel-2); }
+  .lg-or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: .78rem; } .lg-or::before, .lg-or::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
+  .lg-users { display: flex; flex-direction: column; gap: 6px; }
+  .lg-user { display: flex; gap: 12px; align-items: center; text-align: left; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); font: inherit; color: var(--ink); cursor: pointer; }
+  .lg-user:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .lg-who { display: flex; flex-direction: column; gap: 3px; min-width: 0; } .lg-who small { color: var(--muted); font-size: .78rem; }
+  table.users input, table.users select { padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); min-width: 0; width: 100%; }
+  table.users { min-width: 900px; } table.users td:nth-child(1) { min-width: 230px; } table.users td:nth-child(2) { min-width: 240px; } table.users td:nth-child(3) { min-width: 120px; } table.users td:nth-child(4) { min-width: 120px; }
+  table.users input[type="checkbox"] { width: auto; }
+  table.users td { vertical-align: middle; } table.users td.c, table.perms td.c { text-align: center; }
+  table.users tr.off td { opacity: .5; }
+  table.users input:disabled, table.users select:disabled { background: transparent; border-color: transparent; color: var(--ink); opacity: 1; }
+  table.perms td.c { font-size: .82rem; }
   .flow { display: flex; align-items: stretch; overflow-x: auto; padding: 4px 2px 10px; }
   .fstep { min-width: 186px; max-width: 220px; background: var(--panel); border: 1px solid var(--line); border-top: 4px solid var(--stage); border-radius: 12px; padding: 10px 11px; display: flex; flex-direction: column; gap: 5px; cursor: pointer; text-align: left; color: var(--ink); font: inherit; }
   .fstep:hover { border-color: var(--line-strong); border-top-color: var(--stage); }
@@ -493,6 +516,7 @@
       <select id="bp-select"></select>
       <div class="kind" id="bp-kind"></div>
     </div>
+    <div class="whoami" id="whoami"></div>
     <nav class="nav" id="nav" aria-label="Sections"></nav>
     <div class="titleblock" id="titleblock"></div>
   </aside>
@@ -505,6 +529,7 @@
 <div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="drawer" hidden aria-label="Record details"></aside>
 <div class="toast" id="toast" hidden role="status"></div>
+<div id="login" hidden></div>
 
 <script>
 /* =====================================================================
@@ -868,6 +893,7 @@ function loadBlueprints() {
   Object.values(BLUEPRINTS).forEach(b => {
     b.stageTone = b.stageTone || Object.fromEntries(b.stages.map((st, i) => [st, i === b.stages.length - 1 ? "var(--bad)" : i === b.stages.length - 2 ? "var(--good)" : TONES[i % 5]]));
     applyWfStages(b);
+    { const ac = S.acct?.[b.id], t = ac ? ac.users.filter(u => u.works && u.active).map(u => u.name) : null; if (t && t.length) b.team = t; }
     b.stageHelp = b.stageHelp || {}; b.requires = b.requires || {}; b.addons = b.addons || []; b.faq = b.faq || []; b.agents = b.agents || []; b.adProducts = b.adProducts || []; b.siteCheck = b.siteCheck || []; b.depots = b.depots || []; b.team = b.team || ["Owner"];
   });
 }
@@ -1350,7 +1376,7 @@ function checkComplete(el) {
 }
 document.addEventListener("input", (e) => { const el = e.target; if (!el || !el.dataset) return; if (el.dataset.rule) sanitize(el); else if (el.tagName === "TEXTAREA" || el.type === "search" || el.id === "qnote") { const v = el.value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, ""); if (v !== el.value) el.value = v; } }, true);
 document.addEventListener("change", (e) => { const el = e.target; if (el && el.dataset && (el.dataset.rule || el.dataset.min || el.dataset.max) && !checkComplete(el)) { e.stopImmediatePropagation(); } }, true);
-function log(deal, text) { deal.log = deal.log || []; deal.log.unshift({ t: Date.now(), text }); deal.lastMsg = Date.now(); }
+function log(deal, text) { let by = ""; try { by = me()?.name || ""; } catch {} deal.log = deal.log || []; deal.log.unshift(by ? { t: Date.now(), text, by } : { t: Date.now(), text }); deal.lastMsg = Date.now(); }
 const soldIdx = (b) => b.soldAt ? b.stages.indexOf(b.soldAt) : b.stages.length - 2;
 const isSold = (b, x) => { const i = b.stages.indexOf(x.stage); return i >= soldIdx(b) && x.stage !== b.stages[b.stages.length - 1]; };
 const wonStage = (b) => b.stages[b.stages.length - 2], lostStage = (b) => b.stages[b.stages.length - 1], quoteStage = (b) => b.stages[1];
@@ -1370,6 +1396,7 @@ function summary(b, x) {
 function apptOf(deal) { return D().appts.filter(a => a.dealId === deal.id).sort((a, c) => (a.date + a.start).localeCompare(c.date + c.start)).find(a => a.date >= TODAY) || null; }
 
 const ICONS = {
+  users: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.5 6-5.5s5.4 2.1 6 5.5"/><rect x="15" y="10" width="6.5" height="5.5" rx="1.2"/><path d="M16.5 10V8.6a1.75 1.75 0 0 1 3.5 0V10"/>',
   workflow: '<rect x="2.5" y="4" width="6" height="5" rx="1.2"/><rect x="15.5" y="4" width="6" height="5" rx="1.2"/><rect x="9" y="15" width="6" height="5" rx="1.2"/><path d="M8.5 6.5h7M18.5 9v3.5H12V15"/>',
   today: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
   leads: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.8 3.4-6 6.5-6s5.7 2.2 6.5 6"/><path d="M16 5.5a3.5 3.5 0 0 1 0 6.5M18.5 14.5c1.6.9 2.6 2.8 3 5.5"/>',
@@ -1656,6 +1683,155 @@ function simulateMarketplace() {
   toast(`New Marketplace message from ${deal.name} (${place}). Drafting a reply…`); draftReply(deal);
 }
 
+/* ---------------- Users, roles and sign-in (prototype: pick a user or type their email; no passwords) ---------------- */
+const ROLES = {
+  owner: { label: "Owner", tone: "#8E4C9E", about: "Everything, including users and roles." },
+  admin: { label: "Admin", tone: "#1D5FA8", about: "All setup (workflow, fields, pricing, emails) and users, except the Owner." },
+  manager: { label: "Manager", tone: "#C9921A", about: "Runs a team: sees the team's records and reassigns work. Suggests setup changes for approval." },
+  user: { label: "User", tone: "#23806A", about: "Daily work on their own records. No setup screens." },
+  readonly: { label: "Read-only", tone: "#6B7580", about: "Can look at everything; can't change or send anything." },
+};
+const CAN = {
+  config: ["owner", "admin"], configView: ["owner", "admin", "manager"], users: ["owner", "admin"], usersView: ["owner", "admin", "manager"],
+  edit: ["owner", "admin", "manager", "user"], reassign: ["owner", "admin", "manager"], approve: ["owner", "admin", "manager", "user"],
+};
+const PERM_ROWS = [
+  ["Sign in and see records", "all", "all", "team", "own", "all"],
+  ["Create and edit records, log calls, book", "✓", "✓", "✓", "own", "—"],
+  ["Move records through workflow steps", "✓", "✓", "✓", "own", "—"],
+  ["Reassign records to someone else", "✓", "✓", "✓", "—", "—"],
+  ["Approve messages to customers", "✓", "✓", "✓", "own", "—"],
+  ["Change workflow, fields, pricing, emails", "✓", "✓", "suggest", "—", "—"],
+  ["Create or delete a business Blueprint", "✓", "✓", "—", "—", "—"],
+  ["Add users and change roles", "✓", "except Owner", "—", "—", "—"],
+];
+function acctOf(b) {
+  S.acct = S.acct || {};
+  if (!S.acct[b.id]) {
+    const dom = wfSlug(b.business).replace(/\./g, "") || "business", w = wfCfg(b), mail = (n) => w.people[n] || `${wfSlug(n.replace(/.*·\s*/, "")).split(".")[0] || "team"}@${dom}.example`;
+    const users = [{ name: "Jordan Reyes", role: "owner", works: false }, { name: "Sam Patel", role: "admin", works: false },
+      ...b.team.map((t, i) => ({ name: t, role: i === 0 && b.team.length > 1 ? "manager" : "user", works: true })), { name: "Robin Diaz (bookkeeper)", role: "readonly", works: false }];
+    S.acct[b.id] = { users: users.map((u, i) => ({ id: "u" + i, email: mail(u.name), team: "Main team", active: true, ...u })), requests: [] };
+  }
+  return S.acct[b.id];
+}
+function me() { const b = bp(), id = (S.session || {})[b.id]; return acctOf(b).users.find(u => u.id === id && u.active) || null; }
+const can = (k) => { const u = me(); return !!u && CAN[k].includes(u.role); };
+function inScope(b, x) {
+  const u = me(); if (!u) return false; if (["owner", "admin", "readonly"].includes(u.role)) return true;
+  const who = [x.rep, x.wf?.assignee].filter(Boolean);
+  if (u.role === "user") return who.includes(u.name);
+  const team = acctOf(b).users.filter(v => v.team === u.team).map(v => v.name); return !who.length || who.some(n => team.includes(n));
+}
+const initials = (n) => n.replace(/\(.*?\)/g, "").replace(/.*·\s*/, "").split(/\s+/).filter(Boolean).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+const rolePill = (r) => `<span class="rpill" style="--t:${ROLES[r].tone}">${ROLES[r].label}</span>`;
+function notifyAdmins(b, subject, body) {
+  const w = wfCfg(b);
+  acctOf(b).users.filter(u => u.active && ["owner", "admin"].includes(u.role)).forEach(u => w.notices.unshift({ id: "nt" + Date.now() + Math.random().toString(36).slice(2, 6), t: Date.now(), to: u.name, email: u.email, dealId: null, step: "", reason: "request", subject, body: `Hi ${u.name.split(" ")[0]},\n\n${body}\n\nBlueprint CRM` }));
+}
+function signIn(id) {
+  S.session = S.session || {}; S.session[bp().id] = id; S.view = "today"; S.rep = "all"; save();
+  $("login").hidden = true; document.querySelector(".app").style.display = ""; boot();
+  const u = me(); if (u) toast(`Signed in as ${u.name} · ${ROLES[u.role].label}.`);
+}
+function signOut() { closeDrawer(); if (S.session) delete S.session[bp().id]; save(); render(); }
+function renderLogin() {
+  const b = bp(), a = acctOf(b), el = $("login");
+  closeDrawer(); document.querySelector(".app").style.display = "none"; el.hidden = false;
+  const rs = document.documentElement.style; rs.setProperty("--accent", b.accent); rs.setProperty("--on-accent", b.onAccent); rs.setProperty("--accent-soft", b.accent + "1F");
+  el.innerHTML = `<div class="login-card">
+    <div class="logo"><svg width="38" height="38" viewBox="0 0 34 34" aria-hidden="true"><rect x="1" y="1" width="32" height="32" rx="8" fill="var(--accent)"/><path d="M8 24V10h8.5a4 4 0 0 1 0 8H8m8.5 0h1.5a3 3 0 0 1 0 6H8" fill="none" stroke="var(--on-accent)" stroke-width="2.2" stroke-linejoin="round"/></svg><div><h1>Blueprint CRM</h1><span>Sign in</span></div></div>
+    <div class="field"><label for="lg-bp">Business</label><select id="lg-bp">${Object.values(BLUEPRINTS).map(x => `<option value="${x.id}" ${x.id === b.id ? "selected" : ""}>${esc(x.business.replace(/ \(sample\)$/, ""))} · ${esc(x.name)}</option>`).join("")}</select></div>
+    <form class="field" id="lg-form"><label for="lg-email">Work email</label><div class="row" style="flex-wrap:nowrap"><input id="lg-email" type="email" inputmode="email" data-rule="email" autocomplete="username" placeholder="you@company.com" style="flex:1;min-width:0"><button class="btn primary" type="submit">Continue</button></div></form>
+    <div class="lg-or"><span>or try a sample user</span></div>
+    <div class="lg-users">${a.users.filter(u => u.active).map(u => `<button type="button" class="lg-user" data-login="${u.id}"><span class="av" style="--t:${ROLES[u.role].tone}">${esc(initials(u.name))}</span><span class="lg-who"><span class="row" style="gap:6px"><b>${esc(u.name)}</b>${rolePill(u.role)}</span><small>${esc(ROLES[u.role].about)}</small></span></button>`).join("")}</div>
+    <p class="muted" style="font-size:.74rem">Prototype sign-in: there are no passwords, and it's remembered only in this browser. The real product uses secure sign-in (email and password, or Google or Microsoft) with two-step verification.</p></div>`;
+  $("lg-bp").onchange = (e) => { S.bp = e.target.value; ensureData(bp()); save(); renderLogin(); };
+  $("lg-form").onsubmit = (e) => { e.preventDefault(); const v = $("lg-email").value.trim().toLowerCase(), u = acctOf(bp()).users.find(x => x.active && x.email.toLowerCase() === v);
+    if (!v) return flagInput($("lg-email"), "Enter your work email"); if (!u) return flagInput($("lg-email"), "No active user with that email at this business"); signIn(u.id); };
+  el.querySelectorAll("[data-login]").forEach(x => x.onclick = () => signIn(x.dataset.login));
+}
+function renderWho() {
+  const u = me(), el = $("whoami"); if (!el || !u) return;
+  el.innerHTML = `<span class="av" style="--t:${ROLES[u.role].tone}">${esc(initials(u.name))}</span><span class="who-t"><b>${esc(u.name)}</b>${rolePill(u.role)}</span><button class="btn small" type="button" id="signout">Switch user</button>`;
+  $("signout").onclick = signOut;
+}
+function lockBanner() {
+  const u = me(); if (!u || can("config") || !["workflow", "blueprint", "users"].includes(S.view)) return "";
+  if (S.view === "users") return `<p class="banner">🔒 View only. Only an Admin or the Owner can add users or change roles.</p>`;
+  const a = acctOf(bp()), mine = a.requests.filter(r => r.by === u.name).slice(0, 4);
+  return `<section class="panel stack reqbox" style="border-left:4px solid var(--warn)"><div class="panel-title"><span>🔒 View only · signed in as ${esc(ROLES[u.role].label)}</span></div>
+    <p style="font-size:.9rem">Only an Admin or the Owner can change the setup. Suggest a change and they'll get it to approve.</p>
+    <div class="fields"><div class="field"><label for="rq-area">Area</label><select id="rq-area">${["Workflow", "Fields", "Pricing & settings", "Emails", "Something else"].map(x => `<option ${x === (S.view === "workflow" ? "Workflow" : "Fields") ? "selected" : ""}>${x}</option>`).join("")}</select></div></div>
+    <div class="field"><label for="rq-text">What should change, and why?</label><textarea id="rq-text" rows="2" maxlength="600" placeholder="e.g. Add a 'Deposit paid' condition before Booked so we stop losing no-shows."></textarea></div>
+    <div class="row"><button class="btn primary small" type="button" id="rq-send">Send for approval</button></div>
+    ${mine.length ? `<div class="stack" style="gap:4px">${mine.map(r => `<div class="cond"><span>${esc(r.area)}: ${esc(r.text.slice(0, 90))}</span><span class="spill" style="--t:${r.status === "approved" ? "#23806A" : r.status === "declined" ? "#A6362A" : "#C9921A"}">${r.status === "pending" ? "Waiting" : r.status === "approved" ? "Approved" : "Declined"}</span></div>`).join("")}</div>` : ""}</section>`;
+}
+function roleLocks() {
+  const u = me(), main = $("main"); if (!u) return;
+  if (["workflow", "blueprint", "users"].includes(S.view) && !can(S.view === "users" ? "users" : "config"))
+    main.querySelectorAll("input, select, textarea, button").forEach(el => { if (el.closest(".reqbox") || el.hasAttribute("data-wfstep") || el.hasAttribute("data-open")) return; el.disabled = true; });
+  if (u.role === "readonly") main.querySelectorAll("#new-deal, #sim, #react-all, [data-react], [data-approve], [data-edit], [data-discard], [data-slot], #book-next, #chat-start, #cap-send, #chat-reset, [data-call], #ad-go, [data-tquote], [data-tad]").forEach(el => el.disabled = true);
+}
+function drawerLocks() {
+  const u = me(); if (!u) return;
+  if (u.role === "readonly") $("drawer").querySelectorAll("input, select, textarea, button").forEach(el => { if (el.id !== "close-drawer") el.disabled = true; });
+  if (!can("reassign")) ["f-rep", "wf-dwho"].forEach(id => { const el = $(id); if (el) { el.disabled = true; el.title = "Only Managers, Admins and the Owner can reassign"; } });
+}
+function viewUsers() {
+  const b = bp(), a = acctOf(b), u = me(), biz = b.business.replace(/ \(sample\)$/, ""), pending = a.requests.filter(r => r.status === "pending");
+  const editable = (x) => can("users") && !(u.role === "admin" && x.role === "owner");
+  const roleOpts = (x) => Object.entries(ROLES).filter(([k]) => k !== "owner" || u.role === "owner" || x.role === "owner").map(([k, v]) => `<option value="${k}" ${x.role === k ? "selected" : ""}>${v.label}</option>`).join("");
+  return `${head("Users & roles", `Who can sign in to ${biz}`, "Each person gets a role. The role decides which records they see and what they can change.")}
+    ${can("users") && a.requests.length ? `<section class="panel stack"><div class="panel-title"><span>Setup change requests</span><span>${pending.length} waiting</span></div>
+      ${a.requests.slice(0, 10).map(r => `<div class="cond"><span><b>${esc(r.by)}</b> · ${esc(r.area)}: ${esc(r.text)} <span class="muted" style="font-size:.74rem">${shortDate(r.t)}</span></span>${r.status === "pending" ? `<span class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn small primary" type="button" data-rqok="${r.id}">Approve</button><button class="btn small" type="button" data-rqno="${r.id}">Decline</button></span>` : `<span class="spill" style="--t:${r.status === "approved" ? "#23806A" : "#A6362A"}">${r.status === "approved" ? "Approved" : "Declined"}${r.decidedBy ? " · " + esc(r.decidedBy.split(" ")[0]) : ""}</span>`}</div>`).join("")}</section>` : ""}
+    <section class="panel"><div class="panel-title"><span>People</span><span>${a.users.filter(x => x.active).length} active</span></div><div class="table-wrap"><table class="users"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Team</th><th title="Can be assigned records and appointments">Works records</th><th>Active</th><th></th></tr></thead><tbody>
+      ${a.users.map(x => { const ed = editable(x), self = x.id === u.id; return `<tr class="${x.active ? "" : "off"}"><td><span class="row" style="gap:8px;flex-wrap:nowrap"><span class="av sm" style="--t:${ROLES[x.role].tone}">${esc(initials(x.name))}</span><input data-uname="${x.id}" data-rule="name" maxlength="40" value="${esc(x.name)}" aria-label="Name" ${ed ? "" : "disabled"}></span></td>
+        <td><input data-uemail="${x.id}" type="email" data-rule="email" maxlength="80" value="${esc(x.email)}" aria-label="Email" ${ed ? "" : "disabled"}></td>
+        <td><select data-urole="${x.id}" aria-label="Role" ${ed && !self ? "" : "disabled"}>${roleOpts(x)}</select></td>
+        <td><input data-uteam="${x.id}" data-rule="label" maxlength="24" value="${esc(x.team)}" aria-label="Team" ${ed ? "" : "disabled"}></td>
+        <td class="c"><input type="checkbox" data-uworks="${x.id}" ${x.works ? "checked" : ""} aria-label="Works records" ${ed ? "" : "disabled"}></td>
+        <td class="c"><input type="checkbox" data-uactive="${x.id}" ${x.active ? "checked" : ""} aria-label="Active" ${ed && !self ? "" : "disabled"}></td>
+        <td>${ed && !self ? `<button class="btn small" type="button" data-udel="${x.id}" aria-label="Remove ${esc(x.name)}">✕</button>` : self ? '<span class="muted" style="font-size:.74rem">you</span>' : ""}</td></tr>`; }).join("")}</tbody></table></div>
+      ${can("users") ? `<div class="condadd" style="margin-top:12px"><input id="nu-name" data-rule="name" maxlength="40" placeholder="Full name" aria-label="New user's name"><input id="nu-email" type="email" data-rule="email" maxlength="80" placeholder="email@company.com" aria-label="New user's email"><select id="nu-role" aria-label="Role">${Object.entries(ROLES).filter(([k]) => k !== "owner" || u.role === "owner").map(([k, v]) => `<option value="${k}" ${k === "user" ? "selected" : ""}>${v.label}</option>`).join("")}</select><label class="ckline" style="align-items:center"><input type="checkbox" id="nu-works" checked> Works records</label><button class="btn small primary" type="button" id="nu-add">+ Add user</button></div>` : ""}</section>
+    <section class="panel"><div class="panel-title"><span>What each role can do</span></div><div class="table-wrap"><table class="perms"><thead><tr><th></th>${Object.entries(ROLES).map(([k, v]) => `<th>${rolePill(k)}</th>`).join("")}</tr></thead><tbody>${PERM_ROWS.map(r => `<tr><td>${esc(r[0])}</td>${r.slice(1).map(c => `<td class="c ${c === "—" ? "muted" : ""}">${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+      <p class="muted" style="font-size:.76rem;margin-top:8px">“own” = records they handle or are assigned; “team” = records handled by anyone on their team. “Works records” puts someone on the list of people records and bookings can be assigned to.</p></section>`;
+}
+function renameUser(b, x, n) {
+  const old = x.name, w = wfCfg(b); if (!n || n === old) return;
+  Object.values(S.data[b.id]?.deals || []).forEach(d => { if (d.rep === old) d.rep = n; if (d.wf?.assignee === old) d.wf.assignee = n; });
+  if (old in w.people) { w.people[n] = w.people[old]; delete w.people[old]; }
+  Object.values(w.steps).forEach(s => { if (s.assign === "person:" + old) s.assign = "person:" + n; });
+  x.name = n;
+}
+function wireUsers() {
+  const b = bp(), a = acctOf(b), main = $("main"), on = (q, fn) => main.querySelectorAll(q).forEach(fn), find = (id) => a.users.find(x => x.id === id);
+  const owners = () => a.users.filter(x => x.active && x.role === "owner").length;
+  const done = (msg) => { loadBlueprints(); save(); render(); if (msg) toast(msg); };
+  on("[data-uname]", el => el.onchange = () => { const x = find(el.dataset.uname), n = el.value.trim().replace(/\s+/g, " "); if (!n) { el.value = x.name; return; } if (a.users.some(y => y !== x && y.name === n)) { el.value = x.name; return toast(`${n} is already a user.`); } renameUser(b, x, n); done(`Renamed to ${n}. Their records moved with them.`); });
+  on("[data-uemail]", el => el.onchange = () => { const x = find(el.dataset.uemail), v = el.value.trim(); if (!/^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/.test(v)) return flagInput(el, "Enter an email like name@company.com"); if (a.users.some(y => y !== x && y.email.toLowerCase() === v.toLowerCase())) return flagInput(el, "Another user has that email"); x.email = v; wfCfg(b).people[x.name] = v; done(`Email saved for ${x.name}.`); });
+  on("[data-urole]", el => el.onchange = () => { const x = find(el.dataset.urole); if (x.role === "owner" && el.value !== "owner" && owners() <= 1) { el.value = "owner"; return toast("Every business needs at least one Owner. Make someone else Owner first."); } x.role = el.value; done(`${x.name} is now ${ROLES[x.role].label}.`); });
+  on("[data-uteam]", el => el.onchange = () => { const x = find(el.dataset.uteam); x.team = el.value.trim() || "Main team"; done(); });
+  on("[data-uworks]", el => el.onchange = () => { const x = find(el.dataset.uworks); x.works = el.checked; if (x.works) wfCfg(b).people[x.name] = x.email; done(); });
+  on("[data-uactive]", el => el.onchange = () => { const x = find(el.dataset.uactive); if (!el.checked && x.role === "owner" && owners() <= 1) { el.checked = true; return toast("Every business needs at least one active Owner."); } x.active = el.checked; done(x.active ? `${x.name} can sign in again.` : `${x.name} can no longer sign in. Their records stay.`); });
+  on("[data-udel]", el => el.onclick = () => { const x = find(el.dataset.udel); if (x.role === "owner" && owners() <= 1) return toast("Every business needs at least one Owner."); if (!el.dataset.confirm) { el.dataset.confirm = 1; el.textContent = "Remove?"; return; } a.users = a.users.filter(y => y !== x); done(`${x.name} removed. Their records stay; reassign them from the Pipeline.`); });
+  const add = $("nu-add"); if (add) add.onclick = () => { const n = $("nu-name").value.trim().replace(/\s+/g, " "), em = $("nu-email").value.trim();
+    if (!n) return flagInput($("nu-name"), "Add a name"); if (!/^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/.test(em)) return flagInput($("nu-email"), "Enter an email like name@company.com");
+    if (a.users.some(y => y.name === n)) return flagInput($("nu-name"), "That name is already a user"); if (a.users.some(y => y.email.toLowerCase() === em.toLowerCase())) return flagInput($("nu-email"), "Another user has that email");
+    const x = { id: "u" + Date.now().toString(36), name: n, email: em, role: $("nu-role").value, team: me().team || "Main team", works: $("nu-works").checked, active: true }; a.users.push(x); if (x.works) wfCfg(b).people[n] = em;
+    done(`${n} added as ${ROLES[x.role].label}. In the build they'd get an email invite to set up their sign-in.`); };
+  on("[data-rqok]", el => el.onclick = () => { const r = a.requests.find(y => y.id === el.dataset.rqok); r.status = "approved"; r.decidedBy = me().name; r.decidedAt = Date.now(); done(`Approved. Make the change in ${r.area === "Workflow" ? "Workflow" : "Blueprint"}; ${r.by.split(" ")[0]} sees it's approved.`); });
+  on("[data-rqno]", el => el.onclick = () => { const r = a.requests.find(y => y.id === el.dataset.rqno); r.status = "declined"; r.decidedBy = me().name; r.decidedAt = Date.now(); done("Declined."); });
+}
+function wireRequest() {
+  const btn = $("rq-send"); if (!btn) return;
+  btn.onclick = () => { const b = bp(), u = me(), t = $("rq-text").value.replace(/[\u0000-\u0008\u000B-\u001F]/g, "").trim(), area = $("rq-area").value;
+    if (!t) return flagInput($("rq-text"), "Describe the change you'd like");
+    acctOf(b).requests.unshift({ id: "rq" + Date.now().toString(36), t: Date.now(), by: u.name, area, text: t, status: "pending" });
+    notifyAdmins(b, `${b.business.replace(/ \(sample\)$/, "")}: setup change request from ${u.name}`, `${u.name} (${ROLES[u.role].label}) asked for a change to ${area}:\n\n"${t}"\n\nApprove or decline it under Users & roles in Blueprint CRM.`);
+    save(); render(); toast("Sent to the Owner and Admins for approval."); };
+}
+
 /* ---------------- Views ---------------- */
 function navItems() {
   const b = bp(), fm = fulfillmentOf(b.id);
@@ -1664,16 +1840,17 @@ function navItems() {
     b.inventory !== "none" ? ["inventory", { reseller: "Supplier stock", count: "Stock", rental: "Availability", capacity: "Date calendar" }[b.inventory]] : null,
     fm === "delivery" ? ["fulfillment", "Deliveries"] : null,
     b.adProducts.length ? ["marketing", "Marketplace ads"] : null,
-    ["askus", "Website chat"], ["ask", "Ask"], ["inbox", "Approvals"], ["workflow", "Workflow"], ["blueprint", "Blueprint"], ["builder", "New Blueprint"]].filter(Boolean);
+    ["askus", "Website chat"], ["ask", "Ask"], ["inbox", "Approvals"], ["workflow", "Workflow"], ["blueprint", "Blueprint"], ["users", "Users & roles"], ["builder", "New Blueprint"]].filter(Boolean)
+    .filter(([id]) => !(["workflow", "blueprint"].includes(id) && !can("configView")) && !(id === "users" && !can("usersView")) && !(id === "builder" && !can("config")) && !(id === "inbox" && me()?.role === "readonly"));
 }
 function renderNav() {
-  const b = bp(), pending = S.drafts.filter(x => x.bp === b.id && x.status === "pending").length, items = navItems();
+  const b = bp(), inMine = (x) => { const dl = D().deals.find(y => y.id === x.dealId); return !dl || inScope(b, dl); }, pending = S.drafts.filter(x => x.bp === b.id && x.status === "pending" && inMine(x)).length, reqs = can("users") ? acctOf(b).requests.filter(r => r.status === "pending").length : 0, items = navItems();
   if (!items.some(i => i[0] === S.view)) S.view = "today";
-  $("nav").innerHTML = items.map(([id, name]) => `<button type="button" data-view="${id}" aria-current="${S.view === id ? "page" : "false"}">${icon(id)}<span>${esc(name)}</span>${id === "inbox" && pending ? `<span class="count">${pending}</span>` : ""}</button>`).join("");
+  $("nav").innerHTML = items.map(([id, name]) => `<button type="button" data-view="${id}" aria-current="${S.view === id ? "page" : "false"}">${icon(id)}<span>${esc(name)}</span>${id === "inbox" && pending ? `<span class="count">${pending}</span>` : ""}${id === "users" && reqs ? `<span class="count">${reqs}</span>` : ""}</button>`).join("");
   $("nav").querySelectorAll("button").forEach(x => x.onclick = () => { S.view = x.dataset.view; save(); render(); window.scrollTo({ top: 0 }); });
 }
 const head = (eyebrow, title, sub, actions = "") => `<div class="head"><div><div class="eyebrow">${esc(eyebrow)}</div><h2>${esc(title)}</h2>${sub ? `<p>${esc(sub)}</p>` : ""}</div><div class="row">${actions}</div></div>`;
-function repDeals(d) { return S.rep === "all" ? d.deals : d.deals.filter(x => x.rep === S.rep); }
+function repDeals(d) { const b = bp(), mine = d.deals.filter(x => inScope(b, x)); return S.rep === "all" ? mine : mine.filter(x => x.rep === S.rep); }
 function chipRow(b, d) {
   const deals = repDeals(d), q = (x) => price(b, x.f), won = deals.filter(x => x.stage === wonStage(b)).length, lost = deals.filter(x => x.stage === lostStage(b)).length, qs = deals.filter(x => x.stage === quoteStage(b));
   const chips = [["all", "Total", deals.length, "", "var(--line-strong)"], ...b.stages.map(st => [st, st, deals.filter(x => x.stage === st).length, st === quoteStage(b) ? money(qs.reduce((a, x) => a + dealValue(q(x)), 0)) : st === wonStage(b) ? `${won + lost ? Math.round(won / (won + lost) * 100) : 0}% win rate` : (b.stageHelp[st] || ""), b.stageTone[st]]), ["reactivate", b.id === "salon" ? "Rebook" : "Reactivate", deals.filter(x => needsReactivate(b, x)).length, "due", "var(--bad)"]];
@@ -2267,7 +2444,7 @@ function viewAskUs() {
       </div></div>`;
 }
 function viewInbox() {
-  const b = bp(), list = S.drafts.filter(x => x.bp === b.id);
+  const b = bp(), list = S.drafts.filter(x => x.bp === b.id && (() => { const dl = D().deals.find(y => y.id === x.dealId); return !dl || inScope(b, dl); })());
   return `${head("Approvals", "Nothing goes out without your OK", "Assistants draft; you approve, edit or discard. Anything with a price or a time waits here.")}
     ${list.length ? list.map(x => `<section class="panel stack draft"><div class="row" style="justify-content:space-between"><div class="row"><b>${x.kind === "reactivate" ? "Check-in" : "Reply"} to ${esc(x.dealName)}</b><span class="pill ${x.channel === "Messenger" ? "fb" : "plain"}">${esc(x.channel)}</span></div><span class="pill ${x.status === "approved" ? "good" : x.status === "discarded" ? "plain" : "warn"}">${x.status === "approved" ? "Approved" : x.status === "discarded" ? "Discarded" : x.status === "writing" ? "Writing…" : "Waiting for you"}</span></div>
       ${x.status === "pending" && x.editing ? `<textarea id="edit-${x.id}" aria-label="Edit draft">${esc(x.text)}</textarea>` : `<pre data-live="${x.id}">${esc(x.text || "Writing…")}</pre>`}
@@ -2557,7 +2734,7 @@ function renderDrawer() {
         ${siteCheckDone(b, deal) ? (sc.every(v => v) ? '<p class="alert good" style="margin-top:8px">Site looks good.</p>' : '<p class="alert bad" style="margin-top:8px">Flag for the team: ask for a video of the path.</p>') : ""}</div>` : ""}
       <div><div class="panel-title"><span>Log a call</span><span>${(deal.calls || []).length} logged</span></div><div class="calls">${[["noanswer", "📵 No answer"], ["voicemail", "📼 Left voicemail"], ["talked", "✅ Talked: interested"], ["callback", "🔁 Call back later"], ["notint", "✋ Not interested"]].map(([k, l]) => `<button class="btn small" type="button" data-call="${k}">${l}</button>`).join("")}</div></div>
       <div><div class="panel-title"><span>Quick note</span></div><div class="row"><input class="search" id="qnote" maxlength="500" placeholder="Type a note and press Enter"><button class="btn small" type="button" id="qnote-add">+ Add</button></div></div>
-      <div><div class="panel-title"><span>Activity</span></div><div class="log">${(deal.log || []).map(l => `<div><span class="muted num">${new Date(l.t).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span><span>${esc(l.text)}</span></div>`).join("")}</div></div>
+      <div><div class="panel-title"><span>Activity</span></div><div class="log">${(deal.log || []).map(l => `<div><span class="muted num">${new Date(l.t).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span><span>${esc(l.text)}${l.by ? ` <span class="muted" style="font-size:.76rem">· ${esc(l.by.split(/[ (·]/)[0])}</span>` : ""}</span></div>`).join("")}</div></div>
     </div>`;
   $("drawer").hidden = false; $("scrim").hidden = false;
   $("close-drawer").onclick = closeDrawer;
@@ -2595,23 +2772,26 @@ function renderDrawer() {
   $("drawer").querySelectorAll("[data-fieldcb]").forEach(el => el.onchange = () => { deal.f[el.dataset.fieldcb] = el.checked; save(); render(); });
   $("drawer").querySelectorAll("[data-addon]").forEach(el => el.onchange = () => { const set = new Set(deal.f.addons || []); el.checked ? set.add(el.dataset.addon) : set.delete(el.dataset.addon); deal.f.addons = [...set]; save(); render(); });
   $("drawer").querySelectorAll("[data-sc]").forEach(el => el.onclick = () => { deal.sitecheck = deal.sitecheck || Array(b.siteCheck.length).fill(null); deal.sitecheck[+el.dataset.sc] = el.dataset.v === "1"; if (siteCheckDone(b, deal)) log(deal, deal.sitecheck.every(v => v) ? "Delivery check complete: site OK." : "Delivery check: issues flagged."); save(); render(); });
+  drawerLocks();
 }
 function newDeal() {
   const b = bp(), d = D(), f = {}; fieldsOf(b).forEach(x => f[x.key] = x.type === "multi" ? [] : x.key === "qty" ? 1 : "");
-  const deal = { id: "n" + Date.now(), name: "New " + b.dealWord.toLowerCase(), place: "", source: "phone", rep: b.team[0], stage: b.stages[0], opens: 0, lastMsg: Date.now(), created: Date.now(), f, log: [], summary: "" };
+  const u = me(), deal = { id: "n" + Date.now(), name: "New " + b.dealWord.toLowerCase(), place: "", source: "phone", rep: u && b.team.includes(u.name) ? u.name : b.team[0], stage: b.stages[0], opens: 0, lastMsg: Date.now(), created: Date.now(), f, log: [], summary: "" };
   log(deal, "Created by hand."); d.deals.unshift(deal); enterStep(b, deal, deal.stage); save(); render(); openDrawer(deal.id); setTimeout(() => { const el = $("f-name"); if (el) { el.focus(); el.select(); } }, 0);
 }
 
 /* ---------------- Render ---------------- */
 function render() {
+  if (!me()) return renderLogin();
+  $("login").hidden = true; document.querySelector(".app").style.display = "";
   expireHolds();
   const b = bp();
   const root = document.documentElement.style; root.setProperty("--accent", b.accent); root.setProperty("--on-accent", b.onAccent); root.setProperty("--accent-soft", b.accent + "1F");
   $("bp-kind").innerHTML = [...b.kind, ({ pickup: "No delivery", delivery: "Delivery", onsite: "On-site" })[fulfillmentOf(b.id)]].map((k, n) => `<span class="pill ${n === 2 ? "info" : "plain"}">${esc(k)}</span>`).join("");
   $("titleblock").innerHTML = `<div>Blueprint<b>${esc(b.short.toLowerCase())}</b></div><div>Rev<b>0.5.${Object.keys(S.settings[b.id] || {}).length + (cfgOf(b.id)?.history.length || 0)}</b></div><div>Inventory<b>${esc(b.inventory)}</b></div><div>Fulfillment<b>${esc(fulfillmentOf(b.id))}</b></div>`;
-  renderNav();
-  const views = { askus: viewAskUs, today: viewToday, leads: viewLeads, pipeline: viewPipeline, schedule: viewSchedule, map: viewMap, inventory: viewInventory, fulfillment: viewFulfillment, marketing: viewMarketing, ask: viewAsk, inbox: viewInbox, workflow: viewWorkflow, blueprint: viewBlueprint, builder: viewBuilder };
-  const main = $("main"); main.innerHTML = `<div class="fade" style="display:flex;flex-direction:column;gap:16px">${views[S.view]()}</div>`;
+  renderNav(); renderWho();
+  const views = { askus: viewAskUs, today: viewToday, leads: viewLeads, pipeline: viewPipeline, schedule: viewSchedule, map: viewMap, inventory: viewInventory, fulfillment: viewFulfillment, marketing: viewMarketing, ask: viewAsk, inbox: viewInbox, workflow: viewWorkflow, users: viewUsers, blueprint: viewBlueprint, builder: viewBuilder };
+  const main = $("main"); main.innerHTML = `<div class="fade" style="display:flex;flex-direction:column;gap:16px">${lockBanner()}${views[S.view]()}</div>`;
   const on = (sel, fn) => main.querySelectorAll(sel).forEach(fn);
   on("[data-open]", x => { x.onclick = () => openDrawer(x.dataset.open); x.onkeydown = (e) => { if (e.key === "Enter") openDrawer(x.dataset.open); }; });
   on("[data-go]", x => x.onclick = () => { S.view = x.dataset.go; if (x.dataset.gofilter) S.filter = x.dataset.gofilter; save(); render(); });
@@ -2642,7 +2822,9 @@ function render() {
   byId("book-next", el => el.onclick = () => { const deal = D().deals.find(y => y.id === S.booking), n = findNext(b, D(), durationFor(b, deal), preferredRes(b, deal)); if (!n) return toast("No open times in the next two weeks."); book(deal, n.res, n.date, n.start); });
   byId("book-cancel", el => el.onclick = () => { S.booking = null; save(); render(); });
   if (S.view === "blueprint") wireFieldEditor(b);
-  if (S.view === "workflow") wireWorkflow();
+  if (S.view === "workflow" && can("config")) wireWorkflow();
+  if (S.view === "users" && can("users")) wireUsers();
+  wireRequest();
   byId("wf-filter", el => el.onchange = () => { S.wfFilter = el.value; save(); render(); });
   if (S.view === "askus") {
     on("[data-chip]", x => x.onclick = () => chatSend(b, x.dataset.chip));
@@ -2689,11 +2871,13 @@ function render() {
       else { mapObj.flyTo(PLACES[hit], 8, { duration: .7 }); if (S.view === "map" && bp().depots.includes(hit)) { S.mapDepot = hit; save(); $("mapside").innerHTML = mapSide(bp(), D(), settingsFor(bp().id)); wireMapSide(); } }
       toast(`Jumped to ${stateOnly ? q.toUpperCase() : hit}.`); });
   } else if (mapObj) { mapObj.remove(); mapObj = null; }
+  roleLocks();
   if (openId) renderDrawer();
 }
 function boot() {
   $("bp-select").innerHTML = Object.values(BLUEPRINTS).map(b => `<option value="${b.id}">${esc(b.name)}${b.customer1 ? " · customer #1" : ""}${S.custom[b.id] ? " · yours" : ""}</option>`).join("");
   $("bp-select").value = S.bp; render();
+  if (!me()) return;
 }
 $("bp-select").onchange = (e) => { S.bp = e.target.value; S.filter = "all"; S.search = ""; S.rep = "all"; S.askA = ""; S.booking = null; S.day = TODAY; ensureData(bp()); closeDrawer(); save(); render(); toast(`Switched to ${bp().name}. Same app, new business.`); };
 $("omni").onkeydown = (e) => { if (e.key !== "Enter") return; const v = e.target.value.trim(); if (!v) return; if (/\?$/.test(v) || /^(how|what|can|do|does|is|are|why|when|where)\b/i.test(v)) askGo(v); else { S.search = v; S.filter = "all"; S.view = "leads"; save(); render(); } e.target.value = ""; };
