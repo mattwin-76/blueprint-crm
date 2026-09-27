@@ -406,6 +406,17 @@
   .depot { display: flex; flex-direction: column; align-items: center; line-height: 1; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.45)); }
   .depot span { margin-top: 2px; font: 700 10px/1 "JetBrains Mono", monospace; color: #1A1204; background: var(--accent); padding: 2px 4px; border-radius: 4px; }
   .depot.on span { background: var(--ink); color: var(--panel); }
+  .cfgbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; box-shadow: var(--shadow); }
+  .cfgcrumb { display: inline-flex; align-items: center; gap: 6px; font: 600 .7rem/1 "JetBrains Mono", monospace; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .cfgtabs { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+  .cfgtabs button { border: 1px solid transparent; background: none; border-radius: 8px; padding: 6px 10px; font: inherit; font-size: .86rem; color: var(--muted); cursor: pointer; }
+  .cfgtabs button:hover { color: var(--ink); background: var(--panel-2); }
+  .cfgtabs button[aria-selected="true"] { color: var(--accent); background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 30%, transparent); font-weight: 600; }
+  .cfggrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+  .cfgtile { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; box-shadow: var(--shadow); cursor: pointer; font: inherit; color: var(--ink); }
+  .cfgtile:hover { border-color: var(--accent); }
+  .cfgtile svg { color: var(--accent); }
+  .cfgtile b { font-size: 1.02rem; }
   .rpill { display: inline-block; font-size: .68rem; font-weight: 700; letter-spacing: .02em; padding: 1px 7px; border-radius: 999px; color: var(--t); background: color-mix(in srgb, var(--t) 13%, transparent); border: 1px solid color-mix(in srgb, var(--t) 35%, transparent); white-space: nowrap; }
   .av { width: 34px; height: 34px; flex: none; border-radius: 50%; display: grid; place-items: center; font: 700 .78rem/1 "JetBrains Mono", monospace; color: #fff; background: var(--t); }
   .av.sm { width: 26px; height: 26px; font-size: .64rem; }
@@ -1398,6 +1409,8 @@ function summary(b, x) {
 function apptOf(deal) { return D().appts.filter(a => a.dealId === deal.id).sort((a, c) => (a.date + a.start).localeCompare(c.date + c.start)).find(a => a.date >= TODAY) || null; }
 
 const ICONS = {
+  config: '<circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.4M12 18.8v2.4M21.2 12h-2.4M5.2 12H2.8M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7M18.5 18.5l-1.7-1.7M7.2 7.2 5.5 5.5"/><circle cx="12" cy="12" r="6.2"/>',
+  request: '<path d="M4 5h16v11H9l-5 4z"/><path d="M9 10.5h6M12 7.5v6"/>',
   users: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.5 6-5.5s5.4 2.1 6 5.5"/><rect x="15" y="10" width="6.5" height="5.5" rx="1.2"/><path d="M16.5 10V8.6a1.75 1.75 0 0 1 3.5 0V10"/>',
   workflow: '<rect x="2.5" y="4" width="6" height="5" rx="1.2"/><rect x="15.5" y="4" width="6" height="5" rx="1.2"/><rect x="9" y="15" width="6" height="5" rx="1.2"/><path d="M8.5 6.5h7M18.5 9v3.5H12V15"/>',
   today: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
@@ -1694,7 +1707,7 @@ const ROLES = {
   readonly: { label: "Read-only", tone: "#6B7580", about: "Can look at everything; can't change or send anything." },
 };
 const CAN = {
-  config: ["owner", "admin"], configView: ["owner", "admin", "manager"], users: ["owner", "admin"], usersView: ["owner", "admin", "manager"],
+  config: ["owner", "admin"], configView: ["owner", "admin"], users: ["owner", "admin"], usersView: ["owner", "admin"], request: ["manager"],
   edit: ["owner", "admin", "manager", "user"], reassign: ["owner", "admin", "manager"], approve: ["owner", "admin", "manager", "user"],
 };
 const PERM_ROWS = [
@@ -1767,12 +1780,10 @@ function renderWho() {
   $("signout").onclick = signOut;
 }
 function lockBanner() {
-  const u = me(); if (!u || can("config") || !["workflow", "blueprint", "users"].includes(S.view)) return "";
-  if (S.view === "users") return `<p class="banner">🔒 View only. Only an Admin or the Owner can add users or change roles.</p>`;
+  const u = me(); if (!u || S.view !== "request" || !can("request")) return "";
   const a = acctOf(bp()), mine = a.requests.filter(r => r.by === u.name).slice(0, 4);
-  return `<section class="panel stack reqbox" style="border-left:4px solid var(--warn)"><div class="panel-title"><span>🔒 View only · signed in as ${esc(ROLES[u.role].label)}</span></div>
-    <p style="font-size:.9rem">Only an Admin or the Owner can change the setup. Suggest a change and they'll get it to approve.</p>
-    <div class="fields"><div class="field"><label for="rq-area">Area</label><select id="rq-area">${["Workflow", "Fields", "Pricing & settings", "Emails", "Something else"].map(x => `<option ${x === (S.view === "workflow" ? "Workflow" : "Fields") ? "selected" : ""}>${x}</option>`).join("")}</select></div></div>
+  return `<section class="panel stack reqbox" style="border-left:4px solid var(--warn)"><div class="panel-title"><span>Your request</span><span>goes to the Owner and Admins</span></div>
+    <div class="fields"><div class="field"><label for="rq-area">Area</label><select id="rq-area">${["Workflow", "Fields", "Pricing & settings", "Emails", "Something else"].map(x => `<option>${x}</option>`).join("")}</select></div></div>
     <div class="field"><label for="rq-text">What should change, and why?</label><textarea id="rq-text" rows="2" maxlength="600" placeholder="e.g. Add a 'Deposit paid' condition before Booked so we stop losing no-shows."></textarea></div>
     <div class="row"><button class="btn primary small" type="button" id="rq-send">Send for approval</button></div>
     ${mine.length ? `<div class="stack" style="gap:4px">${mine.map(r => `<div class="cond"><span>${esc(r.area)}: ${esc(r.text.slice(0, 90))}</span><span class="spill" style="--t:${r.status === "approved" ? "#23806A" : r.status === "declined" ? "#A6362A" : "#C9921A"}">${r.status === "pending" ? "Waiting" : r.status === "approved" ? "Approved" : "Declined"}</span></div>`).join("")}</div>` : ""}</section>`;
@@ -1852,13 +1863,32 @@ function navItems() {
     b.inventory !== "none" ? ["inventory", { reseller: "Supplier stock", count: "Stock", rental: "Availability", capacity: "Date calendar" }[b.inventory]] : null,
     fm === "delivery" ? ["fulfillment", "Deliveries"] : null,
     b.adProducts.length ? ["marketing", "Marketplace ads"] : null,
-    ["askus", "Website chat"], ["ask", "Ask"], ["inbox", "Approvals"], ["workflow", "Workflow"], ["blueprint", "Blueprint"], ["users", "Users & roles"], ["builder", "New Blueprint"]].filter(Boolean)
-    .filter(([id]) => !(["workflow", "blueprint"].includes(id) && !can("configView")) && !(id === "users" && !can("usersView")) && !(id === "builder" && !can("config")) && !(id === "inbox" && me()?.role === "readonly"));
+    ["askus", "Website chat"], ["ask", "Ask"], ["inbox", "Approvals"], ["request", "Suggest a change"], ["config", "Configuration"]].filter(Boolean)
+    .filter(([id]) => !(id === "config" && !can("config")) && !(id === "request" && !can("request")) && !(id === "inbox" && me()?.role === "readonly"));
 }
+const CONFIG_VIEWS = [["config", "Overview"], ["workflow", "Workflow"], ["blueprint", "Fields & settings"], ["users", "Users & roles"], ["builder", "New Blueprint"]];
+const isConfigView = (v) => CONFIG_VIEWS.some(([id]) => id === v);
+function configTabs() {
+  if (!isConfigView(S.view) || !can("config")) return "";
+  return `<div class="cfgbar"><span class="cfgcrumb">${icon("config", 15)} Configuration</span><div class="cfgtabs" role="tablist">${CONFIG_VIEWS.map(([id, l]) => `<button type="button" role="tab" data-view="${id}" aria-selected="${S.view === id}">${esc(l)}</button>`).join("")}</div><span class="rpill" style="--t:${ROLES[me().role].tone}">Owner & Admin only</span></div>`;
+}
+function viewConfig() {
+  const b = bp(), w = wfCfg(b), a = acctOf(b), c = cfgOf(b.id), biz = b.business.replace(/ \(sample\)$/, ""), pend = a.requests.filter(r => r.status === "pending").length;
+  const tiles = [
+    ["workflow", "Workflow", `${b.stages.length} steps · ${w.states.length} statuses · ${Object.values(w.steps).reduce((n, x) => n + (x.conds || []).length, 0)} conditions`, "Steps, who they're assigned to, statuses, deadlines, conditions that block progress, and email notifications."],
+    ["blueprint", "Fields & settings", `${fieldsOf(b).filter(f => !(c?.archived || []).includes(f.key)).length} fields · ${b.settings.length} settings`, "The information you collect on each record, required fields, prices and business settings, and delivery or on-site mode."],
+    ["users", "Users & roles", `${a.users.filter(u => u.active).length} people${pend ? ` · ${pend} change request${pend > 1 ? "s" : ""} waiting` : ""}`, "Who can sign in, their role and team, and what each role can do."],
+    ["builder", "New Blueprint", `${Object.keys(S.custom || {}).length} custom`, "Set up a whole new kind of business from a sentence or a template."],
+  ];
+  return `${head("Configuration", `Set up ${biz}`, "Everything that customizes this business lives here. Only the Owner and Admins can see or change it.")}
+    <div class="cfggrid">${tiles.map(([id, t, stat, about]) => `<button type="button" class="cfgtile" data-view="${id}">${icon(id, 22)}<b>${esc(t)}</b><span class="num" style="font-size:.8rem;color:var(--accent)">${esc(stat)}</span><span class="muted" style="font-size:.84rem">${esc(about)}</span></button>`).join("")}</div>
+    <section class="panel"><div class="panel-title"><span>Recent setup changes</span></div>${(c?.history || []).slice(-5).reverse().map(h => `<div class="cond" style="margin-bottom:6px"><span>${esc(h.text || h.label || "Field change")}</span><span class="muted num" style="font-size:.74rem">${h.t ? shortDate(h.t) : ""}</span></div>`).join("") || '<p class="muted" style="font-size:.84rem">No field changes yet. The real product keeps a full history of every setup change with who made it and a way to undo.</p>'}</section>`;
+}
+function viewRequest() { return `${head("Suggest a change", "Ask for a setup change", "Only the Owner and Admins can change how this business is set up. Tell them what you need; they approve or decline it.")}`; }
 function renderNav() {
   const b = bp(), inMine = (x) => { const dl = D().deals.find(y => y.id === x.dealId); return !dl || inScope(b, dl); }, pending = S.drafts.filter(x => x.bp === b.id && x.status === "pending" && inMine(x)).length, reqs = can("users") ? acctOf(b).requests.filter(r => r.status === "pending").length : 0, items = navItems();
-  if (!items.some(i => i[0] === S.view)) S.view = "today";
-  $("nav").innerHTML = items.map(([id, name]) => `<button type="button" data-view="${id}" aria-current="${S.view === id ? "page" : "false"}">${icon(id)}<span>${esc(name)}</span>${id === "inbox" && pending ? `<span class="count">${pending}</span>` : ""}${id === "users" && reqs ? `<span class="count">${reqs}</span>` : ""}</button>`).join("");
+  if (!items.some(i => i[0] === S.view) && !(isConfigView(S.view) && can("config"))) S.view = "today";
+  $("nav").innerHTML = items.map(([id, name]) => `<button type="button" data-view="${id}" aria-current="${S.view === id || (id === "config" && isConfigView(S.view)) ? "page" : "false"}">${icon(id)}<span>${esc(name)}</span>${id === "inbox" && pending ? `<span class="count">${pending}</span>` : ""}${id === "config" && reqs ? `<span class="count">${reqs}</span>` : ""}</button>`).join("");
   $("nav").querySelectorAll("button").forEach(x => x.onclick = () => { S.view = x.dataset.view; save(); render(); window.scrollTo({ top: 0 }); });
 }
 const head = (eyebrow, title, sub, actions = "") => `<div class="head"><div><div class="eyebrow">${esc(eyebrow)}</div><h2>${esc(title)}</h2>${sub ? `<p>${esc(sub)}</p>` : ""}</div><div class="row">${actions}</div></div>`;
@@ -2802,8 +2832,8 @@ function render() {
   $("bp-kind").innerHTML = [...b.kind, ({ pickup: "No delivery", delivery: "Delivery", onsite: "On-site" })[fulfillmentOf(b.id)]].map((k, n) => `<span class="pill ${n === 2 ? "info" : "plain"}">${esc(k)}</span>`).join("");
   $("titleblock").innerHTML = `<div>Blueprint<b>${esc(b.short.toLowerCase())}</b></div><div>Rev<b>0.5.${Object.keys(S.settings[b.id] || {}).length + (cfgOf(b.id)?.history.length || 0)}</b></div><div>Inventory<b>${esc(b.inventory)}</b></div><div>Fulfillment<b>${esc(fulfillmentOf(b.id))}</b></div>`;
   renderNav(); renderWho();
-  const views = { askus: viewAskUs, today: viewToday, leads: viewLeads, pipeline: viewPipeline, schedule: viewSchedule, map: viewMap, inventory: viewInventory, fulfillment: viewFulfillment, marketing: viewMarketing, ask: viewAsk, inbox: viewInbox, workflow: viewWorkflow, users: viewUsers, blueprint: viewBlueprint, builder: viewBuilder };
-  const main = $("main"); main.innerHTML = `<div class="fade" style="display:flex;flex-direction:column;gap:16px">${lockBanner()}${views[S.view]()}</div>`;
+  const views = { askus: viewAskUs, today: viewToday, leads: viewLeads, pipeline: viewPipeline, schedule: viewSchedule, map: viewMap, inventory: viewInventory, fulfillment: viewFulfillment, marketing: viewMarketing, ask: viewAsk, inbox: viewInbox, workflow: viewWorkflow, users: viewUsers, config: viewConfig, request: viewRequest, blueprint: viewBlueprint, builder: viewBuilder };
+  const main = $("main"); main.innerHTML = `<div class="fade" style="display:flex;flex-direction:column;gap:16px">${configTabs()}${views[S.view]()}${lockBanner()}</div>`;
   const on = (sel, fn) => main.querySelectorAll(sel).forEach(fn);
   on("[data-open]", x => { x.onclick = () => openDrawer(x.dataset.open); x.onkeydown = (e) => { if (e.key === "Enter") openDrawer(x.dataset.open); }; });
   on("[data-go]", x => x.onclick = () => { S.view = x.dataset.go; if (x.dataset.gofilter) S.filter = x.dataset.gofilter; save(); render(); });
@@ -2834,6 +2864,7 @@ function render() {
   byId("book-next", el => el.onclick = () => { const deal = D().deals.find(y => y.id === S.booking), n = findNext(b, D(), durationFor(b, deal), preferredRes(b, deal)); if (!n) return toast("No open times in the next two weeks."); book(deal, n.res, n.date, n.start); });
   byId("book-cancel", el => el.onclick = () => { S.booking = null; save(); render(); });
   if (S.view === "blueprint") wireFieldEditor(b);
+  on(".cfgbar [data-view], .cfggrid [data-view]", x => x.onclick = () => { S.view = x.dataset.view; save(); render(); window.scrollTo({ top: 0 }); });
   if (S.view === "workflow" && can("config")) wireWorkflow();
   if (S.view === "users" && can("users")) wireUsers();
   wireRequest();
