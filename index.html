@@ -450,6 +450,7 @@
   table.oc-t tr.oc-total td { font-weight: 700; border-top: 2px solid var(--line-strong); }
   .oc-caps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px 18px; }
   .oc-caps div { display: flex; flex-direction: column; gap: 4px; } .oc-caps p { margin: 0; font-size: .86rem; }
+  .solo .side .switch, .solo #lg-bp-field, .solo .bp-compare { display: none; }
   .wd-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
   .wd-pal { cursor: grab; user-select: none; touch-action: none; padding: 7px 12px; border: 1.5px dashed var(--accent); color: var(--accent); background: var(--accent-soft); border-radius: 10px; font-weight: 600; font-size: .86rem; }
   .wd-pal:active { cursor: grabbing; }
@@ -587,7 +588,8 @@
    fulfillment, scheduling, assistants, knowledge base) is configuration.
    All businesses, people, prices and stock are fictional samples.
    ===================================================================== */
-const BUILD = "0.9.1 · 2026-10-04"; // app version shown in the sidebar and desktop app
+const SOLO = window.BLUEPRINT_SOLO || null; // single-company edition (e.g. Bayfront Builders CRM); null = the multi-business Blueprint CRM
+const BUILD = "0.9.2 · 2026-10-04"; // app version shown in the sidebar and desktop app
 const HR = 3600e3, DAY = 24 * HR;
 const pad = (n) => String(n).padStart(2, "0");
 const dstr = (off = 0) => { const d = new Date(); d.setDate(d.getDate() + off); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
@@ -2220,7 +2222,7 @@ function seedBase() {
 }
 
 /* ---------------- State ---------------- */
-const KEY = "blueprint-crm.v3";
+const KEY = SOLO ? `blueprint-solo-${SOLO}.v3` : "blueprint-crm.v3"; // each edition keeps its own saved data
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY) || "null"); } catch { S = null; }
 if (!S || S.v !== 3) S = seed();
@@ -2229,6 +2231,12 @@ LANG = S.lang;
 loadBlueprints();
 if (!BLUEPRINTS[S.bp]) { S.bp = DEFAULT_BP; S.view = "today"; }
 if ((S.orderRev || 0) < 1) { S.bp = DEFAULT_BP; S.view = "today"; S.orderRev = 1; }
+if (SOLO && BLUEPRINTS[SOLO]) {
+  S.bp = SOLO; const sb = BLUEPRINTS[SOLO];
+  document.documentElement.classList.add("solo"); document.title = sb.business + " · CRM";
+  const h = document.querySelector(".side .logo h1"), tg = document.querySelector(".side .logo [data-i18n='app.tagline']");
+  if (h) h.textContent = sb.business; if (tg) { tg.removeAttribute("data-i18n"); tg.textContent = "Powered by Blueprint CRM"; }
+}
 if ((S.ocRev || 0) < 2 && S.acct?.ownerscorp) { const j = S.acct.ownerscorp.users.find(u => u.name === "Dana Lee"); if (j) Object.assign(j, { username: "jamie", password: "admin", role: "admin" }); }
 if ((S.ocRev || 0) < 1) { if (S.acct) delete S.acct.ownerscorp; if (S.session) delete S.session.ownerscorp; S.ocRev = 2; }
 if ((S.ocRev || 0) < 2) S.ocRev = 2;
@@ -2692,8 +2700,8 @@ function renderLogin() {
   closeDrawer(); document.querySelector(".app").style.display = "none"; el.hidden = false;
   const rs = document.documentElement.style; rs.setProperty("--accent", b.accent); rs.setProperty("--on-accent", b.onAccent); rs.setProperty("--accent-soft", b.accent + "1F");
   el.innerHTML = `<div class="login-card">
-    <div class="logo"><svg width="38" height="38" viewBox="0 0 34 34" aria-hidden="true"><rect x="1" y="1" width="32" height="32" rx="8" fill="var(--accent)"/><path d="M8 24V10h8.5a4 4 0 0 1 0 8H8m8.5 0h1.5a3 3 0 0 1 0 6H8" fill="none" stroke="var(--on-accent)" stroke-width="2.2" stroke-linejoin="round"/></svg><div><h1>Blueprint CRM</h1><span>${esc(t("login.signIn"))}</span></div>${langToggle()}</div>
-    <div class="field"><label for="lg-bp">${esc(t("login.business"))}</label><select id="lg-bp">${Object.values(BLUEPRINTS).map(x => `<option value="${x.id}" ${x.id === b.id ? "selected" : ""}>${esc(x.business.replace(/ \(sample\)$/, ""))} · ${esc(tr(x.name))}</option>`).join("")}</select></div>
+    <div class="logo"><svg width="38" height="38" viewBox="0 0 34 34" aria-hidden="true"><rect x="1" y="1" width="32" height="32" rx="8" fill="var(--accent)"/><path d="M8 24V10h8.5a4 4 0 0 1 0 8H8m8.5 0h1.5a3 3 0 0 1 0 6H8" fill="none" stroke="var(--on-accent)" stroke-width="2.2" stroke-linejoin="round"/></svg><div><h1>${SOLO ? esc(b.business) : "Blueprint CRM"}</h1><span>${esc(t("login.signIn"))}</span></div>${langToggle()}</div>
+    <div class="field" id="lg-bp-field"><label for="lg-bp">${esc(t("login.business"))}</label><select id="lg-bp">${Object.values(BLUEPRINTS).map(x => `<option value="${x.id}" ${x.id === b.id ? "selected" : ""}>${esc(x.business.replace(/ \(sample\)$/, ""))} · ${esc(tr(x.name))}</option>`).join("")}</select></div>
     <form class="stack" id="lg-form" style="gap:10px"><div class="field"><label for="lg-user">${esc(t("login.username"))}</label><input id="lg-user" data-rule="username" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="${esc(t("login.userPh"))}"></div>
       <div class="field"><label for="lg-pass">${esc(t("login.password"))}</label><input id="lg-pass" type="password" autocomplete="current-password" maxlength="60"></div>
       <button class="btn primary" type="submit" style="justify-content:center">${esc(t("login.signIn"))}</button></form>
@@ -2802,7 +2810,7 @@ function navItems() {
     ["askus", t("nav.askus")], ["ask", t("nav.ask")], ["inbox", t("nav.inbox")], ["request", t("nav.request")], ["config", t("nav.config")]].filter(Boolean)
     .filter(([id]) => !(id === "config" && !can("config")) && !(id === "request" && !can("request")) && !(id === "inbox" && me()?.role === "readonly"));
 }
-const CONFIG_VIEWS = [["config", "Overview"], ["workflow", "Workflow"], ["blueprint", "Fields & settings"], ["users", "Users & roles"], ["builder", "New Blueprint"]];
+const CONFIG_VIEWS = [["config", "Overview"], ["workflow", "Workflow"], ["blueprint", "Fields & settings"], ["users", "Users & roles"], ["builder", "New Blueprint"]].filter(([id]) => !(SOLO && id === "builder"));
 const isConfigView = (v) => CONFIG_VIEWS.some(([id]) => id === v);
 function configTabs() {
   if (!isConfigView(S.view) || !can("config")) return "";
@@ -2814,7 +2822,7 @@ function viewConfig() {
     ["workflow", t("cfg.view.workflow"), t("cfg.wfStat", { s: b.stages.length, st: w.states.length, c: Object.values(w.steps).reduce((n, x) => n + (x.conds || []).length, 0) }), t("cfg.wfAbout")],
     ["blueprint", t("cfg.view.blueprint"), t("cfg.bpStat", { f: fieldsOf(b).filter(f => !(c?.archived || []).includes(f.key)).length, s: b.settings.length }), t("cfg.bpAbout")],
     ["users", t("cfg.view.users"), t("cfg.usersStat", { n: a.users.filter(u => u.active).length }) + (pend ? t(pend > 1 ? "cfg.reqsWaiting" : "cfg.reqWaiting", { n: pend }) : ""), t("cfg.usersAbout")],
-    ["builder", t("cfg.view.builder"), t("cfg.custom", { n: Object.keys(S.custom || {}).length }), t("cfg.builderAbout")],
+    ...(SOLO ? [] : [["builder", t("cfg.view.builder"), t("cfg.custom", { n: Object.keys(S.custom || {}).length }), t("cfg.builderAbout")]]),
   ];
   return `${head(t("nav.config"), t("cfg.setUp", { biz }), t("cfg.sub"))}
     <div class="cfggrid">${tiles.map(([id, tl, stat, about]) => `<button type="button" class="cfgtile" data-view="${id}">${icon(id, 22)}<b>${esc(tl)}</b><span class="num" style="font-size:.8rem;color:var(--accent)">${esc(stat)}</span><span class="muted" style="font-size:.84rem">${esc(about)}</span></button>`).join("")}</div>
@@ -3496,7 +3504,7 @@ function viewBlueprint() {
     <section class="panel"><div class="panel-title"><span>${esc(t("bp.fulfillment"))}</span><span>${esc(t("bp.moduleSwitch"))}</span></div><div class="modes">${modes.map(([id, t, x]) => `<button class="mode" type="button" data-mode="${id}" aria-pressed="${fm === id}" ${b.fulfillmentOptions.includes(id) ? "" : "disabled"}><b>${esc(t)}</b><span>${esc(x)}</span></button>`).join("")}</div></section>
     <section class="panel"><div class="panel-title"><span>${esc(t("bp.inputs"))}</span><button class="btn small" type="button" id="reset-settings">${esc(t("common.reset"))}</button></div><div class="fields">${b.settings.map(([k, l]) => `<div class="field"><label for="set-${k}">${esc(tr(l))}</label><input id="set-${k}" type="text" inputmode="decimal" data-rule="${/hours|days|opens|radius|volumeBreak/i.test(k) ? "digits" : "decimal"}" data-min="0" ${/pct/i.test(k) ? 'data-max="100"' : ""} value="${esc(fmtInput(s[k]))}" data-setting="${k}"></div>`).join("")}</div></section>
     ${fieldEditor(b)}
-    <section class="panel"><div class="panel-title"><span>${esc(t("bp.blocks"))}</span></div><div class="table-wrap"><table class="compare"><thead><tr><th>${esc(t("bp.block"))}</th>${Object.values(BLUEPRINTS).map(x => `<th>${esc(tr(x.short))}</th>`).join("")}</tr></thead><tbody>${rows.map(([n, fn]) => `<tr><td>${n}</td>${Object.values(BLUEPRINTS).map(x => `<td class="${x.id === b.id ? "cur" : ""}">${esc(fn(x))}</td>`).join("")}</tr>`).join("")}</tbody></table></div></section>
+    <section class="panel bp-compare"><div class="panel-title"><span>${esc(t("bp.blocks"))}</span></div><div class="table-wrap"><table class="compare"><thead><tr><th>${esc(t("bp.block"))}</th>${Object.values(BLUEPRINTS).map(x => `<th>${esc(tr(x.short))}</th>`).join("")}</tr></thead><tbody>${rows.map(([n, fn]) => `<tr><td>${n}</td>${Object.values(BLUEPRINTS).map(x => `<td class="${x.id === b.id ? "cur" : ""}">${esc(fn(x))}</td>`).join("")}</tr>`).join("")}</tbody></table></div></section>
     <section class="panel"><div class="panel-title"><span>${esc(t("bp.file"))}</span></div><pre class="bp-yaml">${esc(yaml)}</pre></section>`;
 }
 
