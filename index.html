@@ -1469,7 +1469,7 @@ const BUILTIN = {
         "Matched on master": { sla: 24, instructions: "Match the bank receipt on the master and mark the invoice paid." },
       },
     },
-    users: [{ name: "Jordan Reyes", role: "owner", title: "Owner", username: "owner", works: false }, { name: "Dana Lee", role: "admin", title: "Project Administrative Assistant", username: "admin", works: true },
+    users: [{ name: "Jordan Reyes", role: "owner", title: "Owner", username: "owner", works: false }, { name: "Dana Lee", role: "admin", title: "Project Administrative Assistant", username: "jamie", password: "admin", works: true },
       { name: "Project Manager", role: "manager", title: "Project Manager", username: "manager", works: true }, { name: "Controller", role: "user", title: "Controller", username: "user", works: true }, { name: "Robin Diaz (bookkeeper)", role: "readonly", title: "Outside bookkeeper", username: "readonly", works: false }],
     inventory: "none", fulfillment: "pickup", fulfillmentOptions: ["pickup"], depots: [], team: ["Dana Lee", "Project Manager", "Controller"],
     schedule: { resources: ["Payment run", "Month-end close"], open: 8, close: 17, slot: 30, defaultMin: 30, book: "Schedule a payment run", what: "payment run" },
@@ -2229,7 +2229,9 @@ LANG = S.lang;
 loadBlueprints();
 if (!BLUEPRINTS[S.bp]) { S.bp = DEFAULT_BP; S.view = "today"; }
 if ((S.orderRev || 0) < 1) { S.bp = DEFAULT_BP; S.view = "today"; S.orderRev = 1; }
-if ((S.ocRev || 0) < 1) { if (S.acct) delete S.acct.ownerscorp; if (S.session) delete S.session.ownerscorp; S.ocRev = 1; }
+if ((S.ocRev || 0) < 2 && S.acct?.ownerscorp) { const j = S.acct.ownerscorp.users.find(u => u.name === "Dana Lee"); if (j) Object.assign(j, { username: "jamie", password: "admin", role: "admin" }); }
+if ((S.ocRev || 0) < 1) { if (S.acct) delete S.acct.ownerscorp; if (S.session) delete S.session.ownerscorp; S.ocRev = 2; }
+if ((S.ocRev || 0) < 2) S.ocRev = 2;
 if (location.hash === "#ownerscorp" && BLUEPRINTS.ownerscorp) { S.bp = "ownerscorp"; S.view = "today"; }
 { const fresh = seed(); Object.keys(BUILTIN).forEach(id => { if (!S.data[id]) S.data[id] = fresh.data[id]; else if ((S.seedRev || 0) < 2) { const have = new Set(S.data[id].deals.map(x => x.id)); fresh.data[id].deals.forEach(x => { if (!have.has(x.id)) S.data[id].deals.push(x); }); } }); S.seedRev = 2; delete S.data.venue; }
 if ((S.demoRev || 0) < 1) { addDemo(S); S.demoRev = 1; }
@@ -2671,7 +2673,7 @@ function inScope(b, x) {
   if (u.role === "user") return who.includes(u.name);
   const team = acctOf(b).users.filter(v => v.team === u.team).map(v => v.name); return !who.length || who.some(n => team.includes(n));
 }
-const DEMO_PASSWORD = (u) => u.username; // prototype only: every password equals the username
+const DEMO_PASSWORD = (u) => u.password || u.username; // prototype only: the password equals the username unless one is set
 const uniqueUsername = (a, name) => { let base = wfSlug(name.replace(/.*·\s*/, "")).split(".")[0] || "user", n = base, k = 2; while (a.users.some(u => u.username === n)) n = base + k++; return n; };
 const initials = (n) => n.replace(/\(.*?\)/g, "").replace(/.*·\s*/, "").split(/\s+/).filter(Boolean).map(w => w[0]).join("").slice(0, 2).toUpperCase();
 const rolePill = (r) => `<span class="rpill" style="--t:${ROLES[r].tone}">${esc(roleLabel(r))}</span>`;
@@ -2696,7 +2698,7 @@ function renderLogin() {
       <div class="field"><label for="lg-pass">${esc(t("login.password"))}</label><input id="lg-pass" type="password" autocomplete="current-password" maxlength="60"></div>
       <button class="btn primary" type="submit" style="justify-content:center">${esc(t("login.signIn"))}</button></form>
     <div class="lg-or"><span>${esc(t("login.demo"))}</span></div>
-    <div class="lg-users">${a.users.filter(u => u.active).map(u => `<button type="button" class="lg-user" data-login="${u.id}"><span class="av" style="--t:${ROLES[u.role].tone}">${esc(initials(u.name))}</span><span class="lg-who"><span class="row" style="gap:6px"><b>${esc(u.name)}</b>${rolePill(u.role)}<code class="uname">${esc(u.username)}</code></span>${u.title ? `<small style="color:var(--ink);font-weight:600">${esc(u.title)}</small>` : ""}<small>${esc(roleAbout(u.role))}</small></span></button>`).join("")}</div>
+    <div class="lg-users">${a.users.filter(u => u.active).map(u => `<button type="button" class="lg-user" data-login="${u.id}"><span class="av" style="--t:${ROLES[u.role].tone}">${esc(initials(u.name))}</span><span class="lg-who"><span class="row" style="gap:6px"><b>${esc(u.name)}</b>${rolePill(u.role)}<code class="uname">${esc(u.username)}</code>${u.password ? `<code class="uname" title="Password">pw: ${esc(u.password)}</code>` : ""}</span>${u.title ? `<small style="color:var(--ink);font-weight:600">${esc(u.title)}</small>` : ""}<small>${esc(roleAbout(u.role))}</small></span></button>`).join("")}</div>
     <p class="muted" style="font-size:.74rem">${esc(t("login.disclaimer"))}</p></div>`;
   applyI18nStatic();
   $("lg-bp").onchange = (e) => { S.bp = e.target.value; ensureData(bp()); save(); renderLogin(); };
