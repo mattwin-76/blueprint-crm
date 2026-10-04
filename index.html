@@ -441,6 +441,11 @@
   table.users tr.off td { opacity: .5; }
   table.users input:disabled, table.users select:disabled { background: transparent; border-color: transparent; color: var(--ink); opacity: 1; }
   table.perms td.c { font-size: .82rem; }
+  .whoami .rpill { white-space: normal; text-align: left; }
+  .appr { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; background: var(--panel); }
+  .appr.hi { border-left: 4px solid var(--warn); }
+  .appr-lines { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 2px; font-size: .86rem; color: var(--muted); }
+  .appr-note { padding: 6px 9px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--panel-2); min-width: 0; width: 180px; }
   .oc-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
   .oc-tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
   .oc-tile b { font: 800 1.35rem/1.15 "Archivo", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
@@ -589,7 +594,7 @@
    All businesses, people, prices and stock are fictional samples.
    ===================================================================== */
 const SOLO = window.BLUEPRINT_SOLO || null; // single-company edition (e.g. Bayfront Builders CRM); null = the multi-business Blueprint CRM
-const BUILD = "0.9.3 · 2026-10-04"; // app version shown in the sidebar and desktop app
+const BUILD = "0.9.4 · 2026-10-04"; // app version shown in the sidebar and desktop app
 const HR = 3600e3, DAY = 24 * HR;
 const pad = (n) => String(n).padStart(2, "0");
 const dstr = (off = 0) => { const d = new Date(); d.setDate(d.getDate() + off); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
@@ -640,7 +645,7 @@ const I18N_PAIRS = {
   "wfk.blocked": ["Blocked", "Bloqueado"], "wfk.done": ["Done", "Concluído"],
   "op.filled": ["is filled in", "está preenchido"], "op.empty": ["is empty", "está vazio"], "op.eq": ["is", "é"], "op.ne": ["is not", "não é"],
   "op.has": ["contains", "contém"], "op.gte": ["is at least", "é no mínimo"], "op.lte": ["is at most", "é no máximo"], "op.checked": ["is checked", "está marcado"],
-  "role.owner": ["Owner", "Proprietário"], "role.admin": ["Admin", "Administrador"], "role.manager": ["Manager", "Gerente"],
+  "role.owner": ["Owner", "Proprietário"], "role.paa": ["Project Administrative Assistant", "Assistente Administrativa de Projetos"], "roleAbout.paa": ["Runs invoices, pay apps and lien waivers on every project; approves paperwork and sets up the workflow. Can't change users or roles.", "Cuida de notas, medições e lien waivers de todos os projetos; aprova a documentação e configura o fluxo. Não altera usuários nem perfis."], "role.admin": ["Admin", "Administrador"], "role.manager": ["Manager", "Gerente"],
   "role.user": ["User", "Usuário"], "role.readonly": ["Read-only", "Somente leitura"],
   "roleAbout.owner": ["Everything, including users and roles.", "Tudo, inclusive usuários e perfis."],
   "roleAbout.admin": ["All setup (workflow, fields, pricing, emails) and users, except the Owner.", "Toda a configuração (fluxo, campos, preços, e-mails) e os usuários, exceto o Proprietário."],
@@ -1471,7 +1476,7 @@ const BUILTIN = {
         "Matched on master": { sla: 24, instructions: "Match the bank receipt on the master and mark the invoice paid." },
       },
     },
-    users: [{ name: "Jordan Reyes", role: "owner", title: "Owner", username: "owner", works: false }, { name: "Dana Lee", role: "admin", title: "Project Administrative Assistant", username: "jamie", password: "admin", works: true },
+    users: [{ name: "Jordan Reyes", role: "owner", title: "Owner", username: "owner", works: false }, { name: "Dana Lee", role: "paa", title: "Project Administrative Assistant", username: "jamie", password: "admin", works: true },
       { name: "Project Manager", role: "manager", title: "Project Manager", username: "manager", works: true }, { name: "Controller", role: "user", title: "Controller", username: "user", works: true }, { name: "Robin Diaz (bookkeeper)", role: "readonly", title: "Outside bookkeeper", username: "readonly", works: false }],
     inventory: "none", fulfillment: "pickup", fulfillmentOptions: ["pickup"], depots: [], team: ["Dana Lee", "Project Manager", "Controller"],
     schedule: { resources: ["Payment run", "Month-end close"], open: 8, close: 17, slot: 30, defaultMin: 30, book: "Schedule a payment run", what: "payment run" },
@@ -1897,6 +1902,60 @@ function ocExceptions(b, d) {
   Object.values(seen).filter(a => a.length > 1).forEach(a => out.push([a[a.length - 1], "bad", `Duplicate invoice # ${a[0].f.invoiceNo}: ${a.length} entries for ${a[0].name}`]));
   return out;
 }
+/* ---------------- Bayfront Builders approvals queue (pay apps, lien waivers, change orders, retainage, vendor paperwork) ---------------- */
+function ocApprovals() {
+  const now = Date.now(), h = (n) => now - n * HR, dd = (n) => now + n * DAY;
+  const A = (o) => ({ status: "pending", note: "", ...o });
+  return [
+    A({ id: "ap1", type: "Pay application", title: "Approve pay app #5 · Bayshore Drywall & Framing", dealId: "oc12", amount: 31662, assignee: "Dana Lee", requestedBy: "Bayshore Drywall & Framing", at: h(20), due: dd(1), priority: "high",
+      lines: ["Riverwalk Medical Office · invoice BDF-322", "Work this period $35,180.00 · retainage 10% ($3,518.00) · net $31,662.00", "Continuation sheet shows 62% complete on line 9 (interior framing); matches the schedule of values."] }),
+    A({ id: "ap2", type: "Lien waiver", title: "Accept conditional progress waiver · Everglades Site Work", dealId: "oc8", amount: 48870, assignee: "Dana Lee", requestedBy: "Everglades Site Work", at: h(5), due: dd(1), priority: "high", effect: "waiver",
+      lines: ["Seabreeze Retail Center · invoice ESW-2210 · pay app #4", "Waiver amount $48,870.00 matches the net payment after 10% retainage.", "Approving records the waiver and clears the hold on this invoice."] }),
+    A({ id: "ap3", type: "Lien waiver", title: "Accept corrected waiver · Gulf Coast Concrete LLC", dealId: "oc9", amount: 26887.5, assignee: "Dana Lee", requestedBy: "Gulf Coast Concrete LLC", at: h(3), due: dd(2), effect: "waiver",
+      lines: ["Palm Harbor Townhomes · invoice GCC-1051 · pay app #3", "Corrected waiver: $26,887.50 (the first one said $27,000.00).", "Approving records the corrected waiver so the invoice can move to Paid."] }),
+    A({ id: "ap4", type: "Change order", title: "Review change order CO-07 · Tampa Steel Erectors", amount: 8450, assignee: "Dana Lee", requestedBy: "Project Manager", at: h(28), due: dd(2),
+      lines: ["Riverwalk Medical Office · added moment frame at grid line C", "Backup attached: signed field directive, revised steel shop drawing S-201, pricing breakdown.", "Approving sends it to the owner's rep for signature and adds $8,450.00 to the contract."] }),
+    A({ id: "ap5", type: "Retainage release", title: "Release retainage · Palmetto Plumbing Co.", dealId: "oc3", amount: 1894, assignee: "Dana Lee", requestedBy: "Palmetto Plumbing Co.", at: h(46), due: dd(5),
+      lines: ["Palm Harbor Townhomes · substantial completion reached for plumbing rough-in", "Retainage held to date: $1,894.00", "Needs an unconditional final waiver before payment; one is on file."] }),
+    A({ id: "ap6", type: "Vendor setup", title: "Approve new vendor · Coastal Glass & Glazing", assignee: "Dana Lee", requestedBy: "Project Manager", at: h(52), due: dd(3),
+      lines: ["W-9 received and matches the business name.", "Certificate of insurance: general liability $1M / $2M, workers' comp on file, Bayfront Builders Inc. (sample) named as additional insured.", "Approving adds them to the master so their first invoice (CGG-0912) can be paid."] }),
+    A({ id: "ap7", type: "Insurance", title: "Accept renewed insurance certificate · Keys Roofing & Sheet Metal", dealId: "oc7", assignee: "Dana Lee", requestedBy: "Keys Roofing & Sheet Metal", at: h(9), due: dd(0.5), priority: "high",
+      lines: ["General liability certificate expired Sep 30.", "Renewal received: new policy through Sep 30 next year, same limits.", "Payments to this contractor are on hold until the renewal is accepted."] }),
+    A({ id: "ap8", type: "Duplicate invoice", title: "Duplicate invoice GCC-1042 · Gulf Coast Concrete LLC", dealId: "oc16", amount: 43425, assignee: "Dana Lee", requestedBy: "Blueprint (automatic check)", at: h(70), due: dd(-1),
+      lines: ["Same contractor, same invoice number and amount as GCC-1042, already paid and reconciled.", "Recommended: reject. Rejecting voids this copy so it is never paid twice."], approveLabel: "Pay anyway", rejectLabel: "Reject and void", recommend: "reject" }),
+    A({ id: "ap9", type: "Payment run", title: "Approve payment run · Tuesday", amount: 60102, assignee: "Controller", requestedBy: "Dana Lee", at: h(4), due: dd(2),
+      lines: ["2 invoices ready: Atlantic HVAC Services (AH-4402), Keys Roofing & Sheet Metal (KR-1190).", "All lien waivers and requisitions checked."] }),
+    A({ id: "ap10", type: "Budget", title: "Sitework over budget · Seabreeze Retail Center", amount: 2180, assignee: "Project Manager", requestedBy: "Blueprint (automatic check)", at: h(30), due: dd(3),
+      lines: ["Invoice ESW-2210 brings the sitework line to 104% of its budget ($2,180.00 over).", "Approve the overage or ask the contractor for a change order."] }),
+  ];
+}
+function ocApprovalList(b) { const d = D(); if (b.id !== "ownerscorp") return []; if (!d.approvals) d.approvals = ocApprovals(); return d.approvals; }
+function myApprovals(b) { const u = me(); if (!u) return []; const all = ocApprovalList(b); return ["owner", "admin"].includes(u.role) ? all : all.filter(a => a.assignee === u.name); }
+function approvalsPanel(b) {
+  const list = myApprovals(b); if (!list.length && b.id !== "ownerscorp") return "";
+  const u = me(), pend = list.filter(a => a.status === "pending").sort((a, c) => a.due - c.due), done = list.filter(a => a.status !== "pending").sort((a, c) => c.decidedAt - a.decidedAt).slice(0, 6);
+  const canAct = (a) => u && u.role !== "readonly" && (a.assignee === u.name || ["owner", "admin"].includes(u.role));
+  const dueLabel = (a) => a.due < Date.now() ? `<span class="pill bad">Overdue</span>` : a.due - Date.now() < DAY ? `<span class="pill warn">Due today</span>` : `<span class="muted" style="font-size:.78rem">Due ${esc(shortDate(a.due))}</span>`;
+  return `<section class="panel stack"><div class="panel-title"><span>Waiting for ${["owner", "admin"].includes(u?.role) ? "approval" : "your approval"}</span><span>${pend.length}</span></div>
+    ${pend.map(a => `<div class="appr${a.priority === "high" ? " hi" : ""}"><div class="row" style="justify-content:space-between;gap:8px"><span class="row" style="gap:8px"><span class="pill info">${esc(a.type)}</span><b>${esc(a.title)}</b></span><span class="row" style="gap:8px">${a.amount ? `<b class="num">${ocM(a.amount)}</b>` : ""}${dueLabel(a)}</span></div>
+      <ul class="appr-lines">${(a.lines || []).map(l => `<li>${esc(l)}</li>`).join("")}</ul>
+      <div class="row" style="justify-content:space-between;gap:8px"><span class="muted" style="font-size:.78rem">From ${esc(a.requestedBy)} · ${esc(daysAgo(a.at) ? daysAgo(a.at) + " d ago" : "today")}${["owner", "admin"].includes(u?.role) ? ` · assigned to ${esc(a.assignee)}` : ""}</span>
+        <span class="row" style="gap:6px">${a.dealId ? `<button class="btn small" type="button" data-open="${a.dealId}">Open invoice</button>` : ""}${canAct(a) ? `<input class="appr-note" data-apnote="${a.id}" maxlength="200" placeholder="Note (optional)" aria-label="Note"><button class="btn small${a.recommend === "reject" ? " primary" : ""}" type="button" data-apno="${a.id}">${esc(a.rejectLabel || "Reject")}</button><button class="btn small${a.recommend === "reject" ? "" : " primary"}" type="button" data-apok="${a.id}">${esc(a.approveLabel || "Approve")}</button>` : ""}</span></div></div>`).join("") || `<p class="muted">Nothing is waiting for ${["owner", "admin"].includes(u?.role) ? "approval" : "you"}.</p>`}
+    ${done.length ? `<details><summary class="muted" style="cursor:pointer;font-size:.86rem">Decided recently (${done.length})</summary><div class="stack" style="gap:6px;margin-top:8px">${done.map(a => `<div class="cond"><span>${esc(a.title)}${a.note ? ` <span class="muted">· “${esc(a.note)}”</span>` : ""}</span><span class="pill ${a.status === "approved" ? "good" : "bad"}">${a.status === "approved" ? "Approved" : "Rejected"} · ${esc((a.decidedBy || "").split(" ")[0])}</span></div>`).join("")}</div></details>` : ""}</section>`;
+}
+function wireApprovals() {
+  const b = bp(), main = $("main"), list = ocApprovalList(b); if (!list.length) return;
+  const decide = (id, ok) => { const a = list.find(x => x.id === id); if (!a || a.status !== "pending") return; const u = me(), note = (main.querySelector(`[data-apnote="${id}"]`)?.value || "").trim();
+    Object.assign(a, { status: ok ? "approved" : "rejected", decidedBy: u.name, decidedAt: Date.now(), note });
+    const deal = a.dealId ? D().deals.find(x => x.id === a.dealId) : null;
+    if (deal) { log(deal, `${a.type} ${ok ? "approved" : "rejected"} by ${u.name}${note ? `: “${note}”` : ""}.`);
+      if (ok && a.effect === "waiver") { const n = ocNet(b, deal.f); Object.assign(deal.f, { waiverType: deal.f.waiverType || "cp", waiverAmount: n.net, waiverMatched: true, reqMatched: true }); if (deal.wf?.state === "waiting") deal.wf.state = "inprogress"; }
+      if (!ok && a.type === "Duplicate invoice") log(deal, "Voided as a duplicate; it will not be paid."); }
+    save(); render(); toast(`${a.type} ${ok ? "approved" : "rejected"}.${ok && a.effect === "waiver" ? " The invoice can now move to Paid." : ""}`); };
+  main.querySelectorAll("[data-apok]").forEach(el => el.onclick = () => decide(el.dataset.apok, true));
+  main.querySelectorAll("[data-apno]").forEach(el => el.onclick = () => decide(el.dataset.apno, false));
+}
+
 function viewRecon() {
   const b = bp(), d = D(), won = wonStage(b), lost = lostStage(b), live = d.deals.filter(x => x.stage !== lost);
   const months = [...new Set([TODAY.slice(0, 7), ...live.map(x => (x.f.paidDate || "").slice(0, 7)).filter(Boolean)])].sort().reverse();
@@ -2240,6 +2299,7 @@ if (SOLO && BLUEPRINTS[SOLO]) {
 if ((S.ocRev || 0) < 2 && S.acct?.ownerscorp) { const j = S.acct.ownerscorp.users.find(u => u.name === "Dana Lee"); if (j) Object.assign(j, { username: "jamie", password: "admin", role: "admin" }); }
 if ((S.ocRev || 0) < 1) { if (S.acct) delete S.acct.ownerscorp; if (S.session) delete S.session.ownerscorp; S.ocRev = 2; }
 if ((S.ocRev || 0) < 2) S.ocRev = 2;
+if ((S.ocRev || 0) < 3) { const j = S.acct?.ownerscorp?.users.find(u => u.name === "Dana Lee"); if (j) Object.assign(j, { role: "paa", password: "admin", title: "Project Administrative Assistant" }); S.ocRev = 3; }
 if (location.hash === "#ownerscorp" && BLUEPRINTS.ownerscorp) { S.bp = "ownerscorp"; S.view = "today"; }
 { const fresh = seed(); Object.keys(BUILTIN).forEach(id => { if (!S.data[id]) S.data[id] = fresh.data[id]; else if ((S.seedRev || 0) < 2) { const have = new Set(S.data[id].deals.map(x => x.id)); fresh.data[id].deals.forEach(x => { if (!have.has(x.id)) S.data[id].deals.push(x); }); } }); S.seedRev = 2; delete S.data.venue; }
 if ((S.demoRev || 0) < 1) { addDemo(S); S.demoRev = 1; }
@@ -2642,24 +2702,26 @@ function simulateMarketplace() {
 const ROLES = {
   owner: { label: "Owner", tone: "#8E4C9E", about: "Everything, including users and roles." },
   admin: { label: "Admin", tone: "#1D5FA8", about: "All setup (workflow, fields, pricing, emails) and users, except the Owner." },
+  paa: { label: "Project Administrative Assistant", tone: "#0F7C8C", about: "Runs invoices, pay apps and lien waivers on every project; approves paperwork and sets up the workflow. Can't change users or roles.", only: "ownerscorp" },
   manager: { label: "Manager", tone: "#C9921A", about: "Runs a team: sees the team's records and reassigns work. Suggests setup changes for approval." },
   user: { label: "User", tone: "#23806A", about: "Daily work on their own records. No setup screens." },
   readonly: { label: "Read-only", tone: "#6B7580", about: "Can look at everything; can't change or send anything." },
 };
 const CAN = {
-  config: ["owner", "admin"], configView: ["owner", "admin"], users: ["owner", "admin"], usersView: ["owner", "admin"], request: ["manager"],
-  edit: ["owner", "admin", "manager", "user"], reassign: ["owner", "admin", "manager"], approve: ["owner", "admin", "manager", "user"],
+  config: ["owner", "admin", "paa"], configView: ["owner", "admin", "paa"], users: ["owner", "admin"], usersView: ["owner", "admin", "paa"], request: ["manager"],
+  edit: ["owner", "admin", "paa", "manager", "user"], reassign: ["owner", "admin", "paa", "manager"], approve: ["owner", "admin", "paa", "manager", "user"],
 };
-const PERM_ROWS = [
-  ["Sign in and see records", "all", "all", "team", "own", "all"],
-  ["Create and edit records, log calls, book", "✓", "✓", "✓", "own", "—"],
-  ["Move records through workflow steps", "✓", "✓", "✓", "own", "—"],
-  ["Reassign records to someone else", "✓", "✓", "✓", "—", "—"],
-  ["Approve messages to customers", "✓", "✓", "✓", "own", "—"],
-  ["Change workflow, fields, pricing, emails", "✓", "✓", "suggest", "—", "—"],
-  ["Create or delete a business Blueprint", "✓", "✓", "—", "—", "—"],
-  ["Add users and change roles", "✓", "except Owner", "—", "—", "—"],
+const PERM_ROWS = [ // columns follow ROLES order: owner, admin, paa, manager, user, readonly
+  ["Sign in and see records", "all", "all", "all", "team", "own", "all"],
+  ["Create and edit records, log calls, book", "✓", "✓", "✓", "✓", "own", "—"],
+  ["Move records through workflow steps", "✓", "✓", "✓", "✓", "own", "—"],
+  ["Reassign records to someone else", "✓", "✓", "✓", "✓", "—", "—"],
+  ["Approve messages to customers", "✓", "✓", "✓", "✓", "own", "—"],
+  ["Change workflow, fields, pricing, emails", "✓", "✓", "✓", "suggest", "—", "—"],
+  ["Create or delete a business Blueprint", "✓", "✓", "—", "—", "—", "—"],
+  ["Add users and change roles", "✓", "except Owner", "—", "—", "—", "—"],
 ];
+const rolesFor = (b) => Object.entries(ROLES).filter(([, v]) => !v.only || v.only === b.id);
 function acctOf(b) {
   S.acct = S.acct || {};
   if (!S.acct[b.id]) {
@@ -2676,12 +2738,12 @@ function acctOf(b) {
 function me() { const b = bp(), id = (S.session || {})[b.id]; return acctOf(b).users.find(u => u.id === id && u.active) || null; }
 const can = (k) => { const u = me(); return !!u && CAN[k].includes(u.role); };
 function inScope(b, x) {
-  const u = me(); if (!u) return false; if (["owner", "admin", "readonly"].includes(u.role)) return true;
+  const u = me(); if (!u) return false; if (["owner", "admin", "paa", "readonly"].includes(u.role)) return true;
   const who = [x.rep, x.wf?.assignee].filter(Boolean);
   if (u.role === "user") return who.includes(u.name);
   const team = acctOf(b).users.filter(v => v.team === u.team).map(v => v.name); return !who.length || who.some(n => team.includes(n));
 }
-const DEMO_PASSWORD = (u) => u.role; // prototype only: every password is the person's role (owner, admin, manager, user, readonly)
+const DEMO_PASSWORD = (u) => u.password || u.role; // prototype only: every password is the person's role (owner, admin, manager, user, readonly)
 const uniqueUsername = (a, name) => { let base = wfSlug(name.replace(/.*·\s*/, "")).split(".")[0] || "user", n = base, k = 2; while (a.users.some(u => u.username === n)) n = base + k++; return n; };
 const initials = (n) => n.replace(/\(.*?\)/g, "").replace(/.*·\s*/, "").split(/\s+/).filter(Boolean).map(w => w[0]).join("").slice(0, 2).toUpperCase();
 const rolePill = (r) => `<span class="rpill" style="--t:${ROLES[r].tone}">${esc(roleLabel(r))}</span>`;
@@ -2743,7 +2805,7 @@ function drawerLocks() {
 function viewUsers() {
   const b = bp(), a = acctOf(b), u = me(), biz = b.business.replace(/ \(sample\)$/, ""), pending = a.requests.filter(r => r.status === "pending");
   const editable = (x) => can("users") && !(u.role === "admin" && x.role === "owner");
-  const roleOpts = (x) => Object.entries(ROLES).filter(([k]) => k !== "owner" || u.role === "owner" || x.role === "owner").map(([k, v]) => `<option value="${k}" ${x.role === k ? "selected" : ""}>${esc(roleLabel(k))}</option>`).join("");
+  const roleOpts = (x) => rolesFor(b).filter(([k]) => k !== "owner" || u.role === "owner" || x.role === "owner").map(([k, v]) => `<option value="${k}" ${x.role === k ? "selected" : ""}>${esc(roleLabel(k))}</option>`).join("");
   return `${head(t("cfg.view.users"), t("users.title", { biz }), t("users.sub"))}
     ${can("users") && a.requests.length ? `<section class="panel stack"><div class="panel-title"><span>${esc(t("users.requests"))}</span><span>${esc(t("users.nWaiting", { n: pending.length }))}</span></div>
       ${a.requests.slice(0, 10).map(r => `<div class="cond"><span><b>${esc(r.by)}</b> · ${esc(areaLabel(r.area))}: ${esc(r.text)} <span class="muted" style="font-size:.74rem">${shortDate(r.t)}</span></span>${r.status === "pending" ? `<span class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn small primary" type="button" data-rqok="${r.id}">${esc(t("common.approve"))}</button><button class="btn small" type="button" data-rqno="${r.id}">${esc(t("common.decline"))}</button></span>` : `<span class="spill" style="--t:${r.status === "approved" ? "#23806A" : "#A6362A"}">${esc(t(r.status === "approved" ? "common.approved" : "common.declined"))}${r.decidedBy ? " · " + esc(r.decidedBy.split(" ")[0]) : ""}</span>`}</div>`).join("")}</section>` : ""}
@@ -2757,8 +2819,8 @@ function viewUsers() {
         <td class="c"><input type="checkbox" data-uworks="${x.id}" ${x.works ? "checked" : ""} aria-label="${esc(t("users.works"))}" ${ed ? "" : "disabled"}></td>
         <td class="c"><input type="checkbox" data-uactive="${x.id}" ${x.active ? "checked" : ""} aria-label="${esc(t("users.active"))}" ${ed && !self ? "" : "disabled"}></td>
         <td>${ed && !self ? `<button class="btn small" type="button" data-udel="${x.id}" aria-label="${esc(t("users.removeX", { name: x.name }))}">✕</button>` : self ? `<span class="muted" style="font-size:.74rem">${esc(t("common.you"))}</span>` : ""}</td></tr>`; }).join("")}</tbody></table></div>
-      ${can("users") ? `<div class="condadd" style="margin-top:12px"><input id="nu-name" data-rule="name" maxlength="40" placeholder="${esc(t("users.fullName"))}" aria-label="${esc(t("users.newName"))}"><input id="nu-email" type="email" data-rule="email" maxlength="80" placeholder="${esc(t("ph.email"))}" aria-label="${esc(t("users.newEmail"))}"><select id="nu-role" aria-label="${esc(t("users.role"))}">${Object.entries(ROLES).filter(([k]) => k !== "owner" || u.role === "owner").map(([k, v]) => `<option value="${k}" ${k === "user" ? "selected" : ""}>${esc(roleLabel(k))}</option>`).join("")}</select><label class="ckline" style="align-items:center"><input type="checkbox" id="nu-works" checked> ${esc(t("users.works"))}</label><button class="btn small primary" type="button" id="nu-add">${esc(t("users.add"))}</button></div>` : ""}</section>
-    <section class="panel"><div class="panel-title"><span>${esc(t("users.canDo"))}</span></div><div class="table-wrap"><table class="perms"><thead><tr><th></th>${Object.entries(ROLES).map(([k, v]) => `<th>${rolePill(k)}</th>`).join("")}</tr></thead><tbody>${PERM_ROWS.map((r, ri) => `<tr><td>${esc(t("perm." + ri))}</td>${r.slice(1).map(c => `<td class="c ${c === "—" ? "muted" : ""}">${esc(permCell(c))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+      ${can("users") ? `<div class="condadd" style="margin-top:12px"><input id="nu-name" data-rule="name" maxlength="40" placeholder="${esc(t("users.fullName"))}" aria-label="${esc(t("users.newName"))}"><input id="nu-email" type="email" data-rule="email" maxlength="80" placeholder="${esc(t("ph.email"))}" aria-label="${esc(t("users.newEmail"))}"><select id="nu-role" aria-label="${esc(t("users.role"))}">${rolesFor(b).filter(([k]) => k !== "owner" || u.role === "owner").map(([k, v]) => `<option value="${k}" ${k === "user" ? "selected" : ""}>${esc(roleLabel(k))}</option>`).join("")}</select><label class="ckline" style="align-items:center"><input type="checkbox" id="nu-works" checked> ${esc(t("users.works"))}</label><button class="btn small primary" type="button" id="nu-add">${esc(t("users.add"))}</button></div>` : ""}</section>
+    <section class="panel"><div class="panel-title"><span>${esc(t("users.canDo"))}</span></div><div class="table-wrap"><table class="perms"><thead><tr><th></th>${rolesFor(b).map(([k, v]) => `<th>${rolePill(k)}</th>`).join("")}</tr></thead><tbody>${PERM_ROWS.map((r, ri) => `<tr><td>${esc(t("perm." + ri))}</td>${r.slice(1).filter((c, ci) => rolesFor(b).some(([k]) => k === Object.keys(ROLES)[ci])).map(c => `<td class="c ${c === "—" ? "muted" : ""}">${esc(permCell(c))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
       <p class="muted" style="font-size:.76rem;margin-top:8px">${esc(t("users.foot"))}</p></section>`;
 }
 function renameUser(b, x, n) {
@@ -2831,7 +2893,7 @@ function viewConfig() {
 }
 function viewRequest() { return `${head(t("req.title"), t("req.head"), t("req.sub"))}`; }
 function renderNav() {
-  const b = bp(), inMine = (x) => { const dl = D().deals.find(y => y.id === x.dealId); return !dl || inScope(b, dl); }, pending = S.drafts.filter(x => x.bp === b.id && x.status === "pending" && inMine(x)).length, reqs = can("users") ? acctOf(b).requests.filter(r => r.status === "pending").length : 0, items = navItems();
+  const b = bp(), inMine = (x) => { const dl = D().deals.find(y => y.id === x.dealId); return !dl || inScope(b, dl); }, pending = S.drafts.filter(x => x.bp === b.id && x.status === "pending" && inMine(x)).length + myApprovals(b).filter(a => a.status === "pending").length, reqs = can("users") ? acctOf(b).requests.filter(r => r.status === "pending").length : 0, items = navItems();
   if (!items.some(i => i[0] === S.view) && !(isConfigView(S.view) && can("config"))) S.view = "today";
   $("nav").innerHTML = items.map(([id, name]) => `<button type="button" data-view="${id}" aria-current="${S.view === id || (id === "config" && isConfigView(S.view)) ? "page" : "false"}">${icon(id)}<span>${esc(name)}</span>${id === "inbox" && pending ? `<span class="count">${pending}</span>` : ""}${id === "config" && reqs ? `<span class="count">${reqs}</span>` : ""}</button>`).join("");
   $("nav").querySelectorAll("button").forEach(x => x.onclick = () => { S.view = x.dataset.view; save(); render(); window.scrollTo({ top: 0 }); });
@@ -3433,6 +3495,7 @@ function viewAskUs() {
 function viewInbox() {
   const b = bp(), list = S.drafts.filter(x => x.bp === b.id && (() => { const dl = D().deals.find(y => y.id === x.dealId); return !dl || inScope(b, dl); })());
   return `${head(t("nav.inbox"), t("inbox.title"), t("inbox.sub"))}
+    ${approvalsPanel(b)}${b.id === "ownerscorp" ? `<div class="panel-title" style="margin-top:4px"><span>Messages to contractors</span></div>` : ""}
     ${list.length ? list.map(x => `<section class="panel stack draft"><div class="row" style="justify-content:space-between"><div class="row"><b>${esc(t(x.kind === "reactivate" ? "inbox.checkinTo" : "inbox.replyTo", { name: x.dealName }))}</b><span class="pill ${x.channel === "Messenger" ? "fb" : "plain"}">${esc(tr(x.channel))}</span></div><span class="pill ${x.status === "approved" ? "good" : x.status === "discarded" ? "plain" : "warn"}">${esc(t(x.status === "approved" ? "common.approved" : x.status === "discarded" ? "inbox.discarded" : x.status === "writing" ? "common.writing" : "inbox.waiting"))}</span></div>
       ${x.status === "pending" && x.editing ? `<textarea id="edit-${x.id}" aria-label="${esc(t("inbox.editAria"))}">${esc(x.text)}</textarea>` : `<pre data-live="${x.id}">${esc(x.text || t("common.writing"))}</pre>`}
       <p class="muted" style="font-size:.78rem">${esc(tr(x.source || ""))}</p>
@@ -3913,6 +3976,7 @@ function render() {
   if (S.view === "blueprint") wireFieldEditor(b);
   on(".cfgbar [data-view], .cfggrid [data-view]", x => x.onclick = () => { S.view = x.dataset.view; save(); render(); window.scrollTo({ top: 0 }); });
   if (S.view === "recon") wireRecon();
+  if (S.view === "inbox") wireApprovals();
   if (S.view === "workflow" && can("config")) wireWorkflow();
   if (S.view === "users" && can("users")) wireUsers();
   wireRequest();
