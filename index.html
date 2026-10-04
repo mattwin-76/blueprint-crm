@@ -441,6 +441,15 @@
   table.users tr.off td { opacity: .5; }
   table.users input:disabled, table.users select:disabled { background: transparent; border-color: transparent; color: var(--ink); opacity: 1; }
   table.perms td.c { font-size: .82rem; }
+  .oc-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .oc-tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .oc-tile b { font: 800 1.35rem/1.15 "Archivo", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+  .oc-tile.good b { color: var(--good); } .oc-tile.warn b { color: var(--warn); } .oc-tile.bad b { color: var(--bad); }
+  .oc-tl { font: 500 .66rem/1.2 "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  table.oc-t { font-variant-numeric: tabular-nums; } table.oc-t td.r, table.oc-t th.r { text-align: right; }
+  table.oc-t tr.oc-total td { font-weight: 700; border-top: 2px solid var(--line-strong); }
+  .oc-caps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px 18px; }
+  .oc-caps div { display: flex; flex-direction: column; gap: 4px; } .oc-caps p { margin: 0; font-size: .86rem; }
   .wd-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
   .wd-pal { cursor: grab; user-select: none; touch-action: none; padding: 7px 12px; border: 1.5px dashed var(--accent); color: var(--accent); background: var(--accent-soft); border-radius: 10px; font-weight: 600; font-size: .86rem; }
   .wd-pal:active { cursor: grabbing; }
@@ -646,7 +655,7 @@ const I18N_PAIRS = {
   "pc.all": ["all", "todos"], "pc.team": ["team", "equipe"], "pc.own": ["own", "próprios"], "pc.suggest": ["suggest", "sugere"], "pc.exceptOwner": ["except Owner", "exceto Proprietário"],
   "area.0": ["Workflow", "Fluxo de trabalho"], "area.1": ["Fields", "Campos"], "area.2": ["Pricing & settings", "Preços e ajustes"], "area.3": ["Emails", "E-mails"], "area.4": ["Something else", "Outra coisa"],
 
-  "nav.today": ["Today", "Hoje"], "nav.pipeline": ["Pipeline", "Funil"], "nav.schedule": ["Schedule", "Agenda"], "nav.map": ["Map", "Mapa"],
+  "nav.recon": ["Month-end", "Fechamento do mês"], "nav.today": ["Today", "Hoje"], "nav.pipeline": ["Pipeline", "Funil"], "nav.schedule": ["Schedule", "Agenda"], "nav.map": ["Map", "Mapa"],
   "nav.inv.reseller": ["Supplier stock", "Estoque do fornecedor"], "nav.inv.count": ["Stock", "Estoque"], "nav.inv.rental": ["Availability", "Disponibilidade"], "nav.inv.capacity": ["Date calendar", "Calendário de datas"],
   "nav.deliveries": ["Deliveries", "Entregas"], "nav.marketing": ["Marketplace ads", "Anúncios no Marketplace"], "nav.askus": ["Website chat", "Chat do site"],
   "nav.ask": ["Ask", "Base de respostas"], "nav.inbox": ["Approvals", "Aprovações"], "nav.request": ["Suggest a change", "Sugerir mudança"], "nav.config": ["Configuration", "Configurações"],
@@ -1303,7 +1312,7 @@ const PLACES = {
   "Lancaster, PA": [40.04, -76.31], "York, PA": [39.96, -76.73], "Evansville, IN": [37.97, -87.56], "Paducah, KY": [37.08, -88.6], "Temple, TX": [31.1, -97.34], "Greeley, CO": [40.42, -104.71], "Bowling Green, KY": [36.99, -86.44],
 };
 const US_OUTLINE = [[-124.7,48.4],[-124.1,46.3],[-124.3,42.0],[-124.4,40.4],[-123.7,39.0],[-122.4,37.8],[-121.9,36.6],[-120.6,34.6],[-118.5,34.0],[-117.1,32.5],[-114.7,32.7],[-111.1,31.3],[-108.2,31.3],[-106.5,31.8],[-104.5,29.6],[-103.1,29.0],[-101.4,29.8],[-99.5,27.5],[-97.2,25.9],[-97.4,27.8],[-94.8,29.4],[-93.8,29.7],[-91.5,29.5],[-90.1,29.1],[-89.2,30.3],[-87.5,30.3],[-85.0,29.6],[-83.6,29.0],[-82.7,27.5],[-81.8,26.1],[-80.4,25.2],[-80.1,26.8],[-80.6,28.4],[-81.4,30.7],[-80.9,32.1],[-79.2,33.2],[-77.9,34.0],[-75.5,35.3],[-76.0,36.9],[-75.1,38.4],[-74.0,40.5],[-72.0,41.0],[-70.0,41.7],[-70.6,42.7],[-70.2,43.7],[-67.0,44.8],[-67.8,47.1],[-69.2,47.4],[-70.9,45.2],[-74.7,45.0],[-76.4,44.2],[-79.1,43.3],[-79.0,42.8],[-82.5,41.7],[-83.1,42.1],[-82.4,43.0],[-82.1,45.0],[-84.1,46.5],[-88.0,48.2],[-89.6,48.0],[-94.8,49.3],[-95.2,49.0],[-123.3,49.0]];
-const SOURCES = { chat: "Website chat", coldcall: "Cold call", doorknock: "Door knock", marketplace: "FB Marketplace", messenger: "Messenger", instagram: "Instagram", website: "Website", google: "Google", phone: "Phone", walkin: "Walk-in", referral: "Referral" };
+const SOURCES = { email: "Email", chat: "Website chat", coldcall: "Cold call", doorknock: "Door knock", marketplace: "FB Marketplace", messenger: "Messenger", instagram: "Instagram", website: "Website", google: "Google", phone: "Phone", walkin: "Walk-in", referral: "Referral" };
 const TONES = ["var(--info)", "var(--warn)", "#9B6BD3", "#2E9BA8", "#C9921A", "var(--good)", "var(--bad)"];
 const UNIT_LABEL = { each: "each", seat: "per user / month", hour: "per hour", day: "per day", month: "per month", event: "per event", sqft: "per sq ft" };
 
@@ -1406,6 +1415,65 @@ const BUILTIN = {
     agents: [["Lead Responder", "New message → checks stock, drafts a reply with a reservation offer."], ["Reservation Reminder", "Reserved item → reminder before the hold ends."], ["Ad Builder", "Marketplace listing for a product."]],
     faq: [["Pickup", "Can I reserve and pick up later?", "Yes, we hold reserved items for 24 hours, longer on request."], ["Returns", "Return policy?", "Unridden items within 30 days with a receipt."]],
     adProducts: [["ebike", "City e-bike 500", 1899], ["road", "Sprint road bike", 1299]],
+  },
+
+  ownerscorp: {
+    id: "ownerscorp", name: "Construction invoices & requisitions", business: "Bayfront Builders Inc. (sample)", short: "Bayfront Builders",
+    kind: ["Construction", "Accounts payable"], accent: "#1F5F8B", onAccent: "#FFFFFF", dealWord: "Invoice", offerWord: "Invoice",
+    pricing: "invoice", noDemo: true, recon: true,
+    fields: [
+      { key: "project", label: "Project", type: "select", options: [["riverwalk", "Riverwalk Medical Office · Tampa"], ["palmharbor", "Palm Harbor Townhomes"], ["seabreeze", "Seabreeze Retail Center · Sarasota"]], show: { list: true } },
+      { key: "invoiceNo", label: "Invoice #", type: "text", chars: "code" },
+      { key: "invoiceDate", label: "Invoice date", type: "date" },
+      { key: "amount", label: "Invoice amount (work this period)", type: "money", min: 0 },
+      { key: "reqNo", label: "Requisition / pay app #", type: "number", min: 1 },
+      { key: "retainagePct", label: "Retainage (%)", type: "number", decimal: true, min: 0 },
+      { key: "savedContractor", label: "Saved in the contractor folder", type: "checkbox" },
+      { key: "savedPending", label: "Saved in the Pending to be paid folder", type: "checkbox" },
+      { key: "onMaster", label: "Entered on the master", type: "checkbox" },
+      { key: "reqMatched", label: "Matches the requisition / retainage summary", type: "checkbox" },
+      { key: "waiverType", label: "Lien waiver received", type: "select", options: [["cp", "Conditional · progress payment"], ["up", "Unconditional · progress payment"], ["cf", "Conditional · final payment"], ["uf", "Unconditional · final payment"]] },
+      { key: "waiverAmount", label: "Waiver amount", type: "money", min: 0 },
+      { key: "waiverMatched", label: "Waiver checked against the continuation sheet", type: "checkbox" },
+      { key: "paidDate", label: "Date paid", type: "date" },
+      { key: "bankRef", label: "Bank receipt / check #", type: "text", chars: "code" },
+      { key: "receiptSaved", label: "Bank receipt saved in this month's folder", type: "checkbox" },
+      { key: "markedPaid", label: "Marked paid on the master", type: "checkbox" },
+      { key: "reconMonth", label: "Reconciliation month (YYYY-MM)", type: "text", chars: "code" },
+      { key: "reconciled", label: "Recorded on the reconciliation sheet", type: "checkbox" },
+    ],
+    stages: ["Invoice received", "Pending to be paid", "On the master", "Waiver & requisition check", "Paid", "Matched on master", "Reconciled", "Disputed / on hold"],
+    phases: { "Invoice received": "Intake", "On the master": "Review", "Paid": "Payment", "Reconciled": "Month-end" },
+    stageHelp: { "Waiver & requisition check": "lien waiver + continuation sheet", "Matched on master": "bank receipt matched" },
+    requires: {
+      "Pending to be paid": ["project", "invoiceNo", "amount", "savedContractor"],
+      "On the master": ["savedPending"],
+      "Waiver & requisition check": ["onMaster", "reqNo"],
+      "Paid": ["reqMatched", "waiverType", "waiverMatched", "@waiverok"],
+      "Matched on master": ["paidDate", "bankRef", "receiptSaved"],
+      "Reconciled": ["markedPaid", "reconMonth", "reconciled"],
+    },
+    wfDefaults: {
+      states: [
+        { id: "unassigned", label: "Unassigned", kind: "open", tone: "#8A94A0" }, { id: "assigned", label: "Not started", kind: "open", tone: "#1D5FA8" },
+        { id: "inprogress", label: "In progress", kind: "active", tone: "#C9921A" }, { id: "waiting", label: "Waiting on contractor", kind: "waiting", tone: "#8E4C9E" },
+        { id: "waitbank", label: "Waiting on bank", kind: "waiting", tone: "#2F7FB8" }, { id: "blocked", label: "On hold", kind: "blocked", tone: "#A6362A" }, { id: "done", label: "Done", kind: "done", tone: "#23806A" },
+      ],
+      steps: {
+        "Invoice received": { sla: 24, instructions: "Save the invoice in the contractor's folder and check the invoice # and amount." },
+        "Pending to be paid": { sla: 24, instructions: "Save a copy in the Pending to be paid folder." },
+        "On the master": { sla: 24, instructions: "Enter it on the master: contractor, project, requisition #, amount and retainage." },
+        "Waiver & requisition check": { sla: 48, instructions: "Match the invoice to the requisition / retainage summary, then check the lien waiver against the continuation sheet." },
+        "Paid": { sla: 72, assign: "person:Controller", state: "waitbank", instructions: "When the payment clears, save the bank receipt in this month's bank receipts folder and enter the check or ACH #." },
+        "Matched on master": { sla: 24, instructions: "Match the bank receipt on the master and mark the invoice paid." },
+      },
+    },
+    inventory: "none", fulfillment: "pickup", fulfillmentOptions: ["pickup"], depots: [], team: ["Dana Lee", "Project Manager", "Controller"],
+    schedule: { resources: ["Payment run", "Month-end close"], open: 8, close: 17, slot: 30, defaultMin: 30, book: "Schedule a payment run", what: "payment run" },
+    settings: [["retainagePct", "Default retainage (%)", 10], ["reactivateDays", "Flag invoices quiet after (days)", 14], ["hotOpens", "Hot at link opens", 99]],
+    agents: [["Invoice Reader", "New invoice PDF → fills contractor, invoice #, amount, requisition # and retainage."], ["Waiver Checker", "Lien waiver arrives → compares it to the continuation sheet and the net payment."], ["Bank Matcher", "Bank receipt saved → matches it to the invoice on the master."], ["Month-end Closer", "End of month → builds the reconciliation sheet and lists anything unmatched."]],
+    faq: [["Payments", "When are contractor invoices paid?", "After the requisition and lien waiver are checked, on the next scheduled payment run."], ["Retainage", "How much retainage is held?", "10% of each progress payment unless the contract says otherwise."]],
+    addons: [], adProducts: [],
   },
 
   software: {
@@ -1626,7 +1694,7 @@ const SEASON_LABEL = { peak: "peak season", shoulder: "shoulder season", off: "o
 
 let BLUEPRINTS = {};
 // Menu order (founder: hair salon first, containers near the bottom); new built-ins not listed go before containers, custom ones at the end
-const BP_ORDER = ["salon", "rental", "retail", "software", "furniture", "wholesale", "sheds", "roofing", "moving", "homeservices", "container", "cleaning"];
+const BP_ORDER = ["salon", "ownerscorp", "rental", "retail", "software", "furniture", "wholesale", "sheds", "roofing", "moving", "homeservices", "container", "cleaning"];
 const DEFAULT_BP = "salon";
 function loadBlueprints() {
   const rank = (id) => BP_ORDER.includes(id) ? BP_ORDER.indexOf(id) : BUILTIN[id] ? BP_ORDER.indexOf("container") - .5 : 99;
@@ -1718,6 +1786,13 @@ function price(b, d) {
     lines.push({ label: t("q.cl.line", { sqft: fmtNum(+d.sqft), v: d.visits, h: fmtNum(hrs, 1) }), amount: monthly, recurring: true });
     addonLines(1, true);
     if (s.targetMargin < s.marginFloor) warnings.push(t("q.cl.margin", { m: fmtNum(s.targetMargin), floor: fmtNum(s.marginFloor) }));
+  } else if (b.pricing === "invoice") {
+    need(["amount"]); if (missing.length) return { missing };
+    const n = ocNet(b, d);
+    lines.push({ label: "Work completed this period" + (d.reqNo ? ` · pay app #${d.reqNo}` : ""), amount: n.gross });
+    if (n.ret) lines.push({ label: `Less retainage (${fmtNum(n.pct)}%)`, amount: -n.ret });
+    if (d.waiverType && d.waiverAmount !== "" && d.waiverAmount != null && Math.abs(+d.waiverAmount - n.net) >= 1) warnings.push(`The lien waiver (${ocM(+d.waiverAmount)}) doesn't match the net payment (${ocM(n.net)}). Ask the contractor for a corrected waiver before paying.`);
+    if (d.waiverType && !d.waiverMatched) warnings.push("Check the lien waiver against the continuation sheet before this invoice can move to Paid.");
   } else {
     need(["offering"]); if (missing.length) return { missing };
     const o = offering(b, d.offering);
@@ -1754,10 +1829,120 @@ function price(b, d) {
   else if (b.pricing === "roofing") { deposit = Math.round(oneTime * s.depositPct / 100); depositNote = t("q.dep.roof", { pct: fmtNum(s.depositPct) }); }
   else if (s.depositPct) { deposit = Math.round(oneTime * s.depositPct / 100); depositNote = t(fulfillmentOf(b.id) === "delivery" ? "q.dep.balDelivery" : "q.dep.balVisit", { pct: fmtNum(s.depositPct) }); }
   else depositNote = t(fulfillmentOf(b.id) === "pickup" ? "q.dep.pickup" : "q.dep.appt");
+  if (b.pricing === "invoice") { deposit = 0; depositNote = "Net amount due to the contractor after retainage."; }
   const prelim = !!lines.prelim, range = prelim ? { low: Math.round(oneTime * (1 - settingsFor(b.id).prelimPct / 100) / 100) * 100, high: Math.round(oneTime * (1 + settingsFor(b.id).prelimPct / 100) / 100) * 100 } : null;
   return { lines, oneTime, recurring, deposit, depositNote, warnings, missing, delivered, prelim, range };
 }
 const priceLabel = (q) => q.missing?.length ? "" : q.prelim ? `${money(q.range.low)}–${money(q.range.high)} ${t("q.estShort")}` : (q.oneTime ? money(q.oneTime) : "") + (q.recurring ? `${q.oneTime ? " + " : ""}${money(q.recurring)}${t("q.perMo")}` : "") + (q.delivered ? t("q.deliveredSfx") : "");
+
+/* ---------------- Bayfront Builders demo: construction invoices, requisitions, lien waivers and month-end ---------------- */
+function ocSeed() {
+  const usd = (n) => "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const now = Date.now(), d = (n) => dstr(-n), stagesOC = ["Invoice received", "Pending to be paid", "On the master", "Waiver & requisition check", "Paid", "Matched on master", "Reconciled", "Disputed / on hold"];
+  const rows = [
+    // contractor, project, invoice #, amount, req #, stage index, days since invoice, tweaks
+    ["Gulf Coast Concrete LLC", "riverwalk", "GCC-1042", 48250, 6, 6, 34, {}],
+    ["Sunshine Electric Inc.", "riverwalk", "SE-2291", 31780.5, 5, 6, 31, {}],
+    ["Palmetto Plumbing Co.", "palmharbor", "PP-7714", 18940, 3, 6, 29, {}],
+    ["Bayshore Drywall & Framing", "seabreeze", "BDF-318", 22615, 4, 5, 24, {}],
+    ["Tampa Steel Erectors", "riverwalk", "TSE-0587", 67400, 5, 5, 21, {}],
+    ["Atlantic HVAC Services", "palmharbor", "AH-4402", 26830, 2, 4, 15, {}],
+    ["Keys Roofing & Sheet Metal", "seabreeze", "KR-1190", 39950, 3, 4, 13, { paidDate: false }],
+    ["Everglades Site Work", "seabreeze", "ESW-2210", 54300, 4, 3, 11, { waiverType: "", waiverMatched: false, state: "waiting", note: "Waiting on the conditional progress waiver from the contractor." }],
+    ["Gulf Coast Concrete LLC", "palmharbor", "GCC-1051", 29875, 3, 3, 9, { waiverAmount: 27000, waiverMatched: false, note: "Waiver amount doesn't match the net payment; asked the contractor for a corrected waiver." }],
+    ["Coastal Glass & Glazing", "riverwalk", "CGG-0912", 17420, 2, 2, 7, {}],
+    ["Sunshine Electric Inc.", "seabreeze", "SE-2304", 12960, 2, 2, 5, {}],
+    ["Bayshore Drywall & Framing", "riverwalk", "BDF-322", 35180, 5, 1, 3, {}],
+    ["Atlantic HVAC Services", "riverwalk", "AH-4417", 21345, 4, 1, 2, {}],
+    ["Palmetto Plumbing Co.", "seabreeze", "PP-7729", 9860, 2, 0, 1, { savedContractor: false }],
+    ["Tampa Steel Erectors", "seabreeze", "TSE-0601", 44120, 1, 0, 0.3, {}],
+    ["Gulf Coast Concrete LLC", "riverwalk", "GCC-1042", 48250, 6, 7, 6, { note: "Duplicate of GCC-1042 already paid on the Riverwalk master. Held so it isn't paid twice." }],
+  ];
+  return rows.map(([name, project, invoiceNo, amount, reqNo, s, days, tw], i) => {
+    const net = Math.round(amount * 90) / 100, paidAgo = Math.max(0, days - 10), f = {
+      project, invoiceNo, invoiceDate: d(Math.floor(days)), amount, reqNo, retainagePct: 10,
+      savedContractor: s >= 1 || s === 7, savedPending: s >= 2 || s === 7, onMaster: s >= 3 || s === 7, reqMatched: s >= 4 && s !== 7, waiverType: s >= 4 && s !== 7 ? (s >= 6 ? "up" : "cp") : "", waiverAmount: s >= 4 && s !== 7 ? net : "",
+      waiverMatched: s >= 4 && s !== 7, paidDate: s >= 4 && s !== 7 ? d(paidAgo) : "", bankRef: s >= 5 && s !== 7 ? `ACH-${48200 + i * 37}` : "", receiptSaved: s >= 5 && s !== 7,
+      markedPaid: s >= 6 && s !== 7, reconMonth: s >= 6 && s !== 7 ? d(paidAgo).slice(0, 7) : "", reconciled: s >= 6 && s !== 7,
+    };
+    if (s === 3) { f.reqMatched = true; f.waiverType = tw.waiverType ?? "cp"; f.waiverAmount = tw.waiverAmount ?? net; f.waiverMatched = tw.waiverMatched ?? false; }
+    if (s === 4 && tw.paidDate === false) { f.paidDate = ""; }
+    if (s === 5) { f.markedPaid = i % 2 === 0; }
+    if (s === 0 && tw.savedContractor === false) f.savedContractor = false;
+    if (s === 0 && tw.savedContractor !== false) f.savedContractor = true;
+    const stage = stagesOC[s], created = now - days * DAY;
+    const deal = { id: `oc${i + 1}`, name, place: "", source: "email", rep: s === 4 ? "Controller" : "Dana Lee", stage, opens: 0, created, lastMsg: now - Math.min(days, 2) * DAY, f, calls: [],
+      log: [{ t: created, text: `Invoice ${invoiceNo} received by email for ${["Riverwalk Medical Office", "Palm Harbor Townhomes", "Seabreeze Retail Center"][["riverwalk", "palmharbor", "seabreeze"].indexOf(project)]}.` }],
+      summary: tw.note || `Pay app #${reqNo}, ${usd(amount)} gross, ${usd(net)} net after 10% retainage.` };
+    if (tw.state) deal.wf = { state: tw.state, assignee: "Dana Lee", since: now - 2 * DAY, due: now + DAY };
+    if (s === 7) deal.lost = "Duplicate invoice";
+    return deal;
+  });
+}
+const ocM = (n) => new Intl.NumberFormat(LOC(), { style: "currency", currency: CURRENCY, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(+n || 0);
+function ocNet(b, f) { const a = +f.amount || 0, r = f.retainagePct === "" || f.retainagePct == null ? +settingsFor(b.id).retainagePct || 0 : +f.retainagePct; return { gross: a, ret: Math.round(a * r) / 100, net: Math.round(a * (100 - r)) / 100, pct: r }; }
+function ocExceptions(b, d) {
+  const lost = lostStage(b), paidI = b.stages.indexOf("Paid"), out = [];
+  d.deals.filter(x => x.stage !== lost).forEach(x => { const f = x.f, n = ocNet(b, f), si = b.stages.indexOf(x.stage);
+    if (si >= paidI - 1 && !f.waiverType) out.push([x, "bad", "No lien waiver on file yet"]);
+    if (f.waiverType && f.waiverAmount !== "" && f.waiverAmount != null && Math.abs(+f.waiverAmount - n.net) >= 1) out.push([x, "bad", `Waiver ${ocM(+f.waiverAmount)} doesn't match the net payment ${ocM(n.net)}`]);
+    if (f.paidDate && !(f.bankRef && f.receiptSaved)) out.push([x, "warn", "Paid, but the bank receipt isn't matched yet"]);
+    if (si >= 2 && !f.savedPending) out.push([x, "warn", "Not saved in the Pending to be paid folder"]); });
+  const seen = {}; d.deals.forEach(x => { if (!x.f.invoiceNo) return; const k = (x.name + "|" + x.f.invoiceNo).toLowerCase(); (seen[k] = seen[k] || []).push(x); });
+  Object.values(seen).filter(a => a.length > 1).forEach(a => out.push([a[a.length - 1], "bad", `Duplicate invoice # ${a[0].f.invoiceNo}: ${a.length} entries for ${a[0].name}`]));
+  return out;
+}
+function viewRecon() {
+  const b = bp(), d = D(), won = wonStage(b), lost = lostStage(b), live = d.deals.filter(x => x.stage !== lost);
+  const months = [...new Set([TODAY.slice(0, 7), ...live.map(x => (x.f.paidDate || "").slice(0, 7)).filter(Boolean)])].sort().reverse();
+  const pending = months.filter(m => live.some(x => (x.f.paidDate || "").slice(0, 7) === m && x.stage !== won)), month = months.includes(S.reconMonth) ? S.reconMonth : (pending[pending.length - 1] || TODAY.slice(0, 7)), mLabel = new Date(month + "-15T12:00:00").toLocaleDateString(LOC(), { month: "long", year: "numeric" });
+  const inMonth = live.filter(x => (x.f.paidDate || "").slice(0, 7) === month).sort((a, c) => (a.f.paidDate > c.f.paidDate ? 1 : -1));
+  const isMatched = (x) => !!(x.f.bankRef && x.f.receiptSaved), ready = inMonth.filter(x => x.stage !== won && isMatched(x));
+  const sum = (arr, k) => arr.reduce((a, x) => a + ocNet(b, x.f)[k], 0), ex = ocExceptions(b, d);
+  const retHeld = sum(live, "ret"), openNet = sum(live.filter(x => !x.f.paidDate), "net");
+  const led = {}; live.forEach(x => { const k = x.name + "|" + x.f.project, n = ocNet(b, x.f), r = led[k] = led[k] || { name: x.name, project: optLabel(b, "project", x.f.project), n: 0, billed: 0, ret: 0, paid: 0, open: 0, missing: 0 }; r.n++; r.billed += n.gross; r.ret += n.ret; if (x.f.paidDate) r.paid += n.net; else r.open += n.net; if (!x.f.waiverType && b.stages.indexOf(x.stage) >= 3) r.missing++; });
+  const ledRows = Object.values(led).sort((a, c) => a.name.localeCompare(c.name) || a.project.localeCompare(c.project));
+  const tile = (label, value, note, tone) => `<div class="oc-tile${tone ? " " + tone : ""}"><span class="oc-tl">${esc(label)}</span><b class="num">${value}</b>${note ? `<span class="muted" style="font-size:.78rem">${esc(note)}</span>` : ""}</div>`;
+  const caps = [
+    ["Enter it once", "One invoice record replaces the contractor folder, the Pending to be paid folder, the master and the reconciliation sheet. Every view below is built from it."],
+    ["Month-end in one click", "Matched bank receipts flow straight onto the reconciliation sheet. Anything unmatched is listed, so nothing slips through."],
+    ["Lien waivers checked for you", "Each waiver is compared with the net payment and the continuation sheet. A mismatch or missing waiver blocks payment until it's fixed."],
+    ["Retainage always current", "Retainage held is tracked by contractor and project from inception, ready for the retainage summary and final release."],
+    ["Nothing paid twice", "Duplicate invoice numbers are flagged the moment they're entered."],
+    ["The process, written down", "Each step has an owner, a deadline and a checklist, so a new hire learns the process A to Z instead of ABC, QRS, then HIJ."],
+    ["Roles and approvals", "The controller approves payments, project managers see their projects, and every change is logged with who made it and when."],
+    ["Next: automatic reading", "In the full product, invoices, waivers and bank statements are read automatically from email and PDFs, the way Dana's Claude skills do today."],
+  ];
+  return `${head("Month-end", `Month-end for ${b.business}`, "The master, the reconciliation sheet and the lien waiver checks, built automatically from each invoice you enter once.", `<select class="btn" id="oc-month" aria-label="Month">${months.map(m => `<option value="${m}" ${m === month ? "selected" : ""}>${esc(new Date(m + "-15T12:00:00").toLocaleDateString(LOC(), { month: "long", year: "numeric" }))}</option>`).join("")}</select>`)}
+    <div class="oc-tiles">
+      ${tile("Paid in " + mLabel.split(" ")[0], ocM(sum(inMonth, "net")), `${inMonth.length} invoice${inMonth.length === 1 ? "" : "s"}`)}
+      ${tile("Matched to bank", `${inMonth.filter(isMatched).length} / ${inMonth.length}`, inMonth.length - inMonth.filter(isMatched).length ? `${inMonth.length - inMonth.filter(isMatched).length} still to match` : "all matched", inMonth.length - inMonth.filter(isMatched).length ? "warn" : "good")}
+      ${tile("Reconciled", `${inMonth.filter(x => x.stage === won).length} / ${inMonth.length}`, ready.length ? `${ready.length} ready to reconcile` : "")}
+      ${tile("Retainage held", ocM(retHeld), "all projects, from inception")}
+      ${tile("Open to pay", ocM(openNet), "net, not yet paid")}
+      ${tile("Exceptions", String(ex.length), ex.length ? "need a look" : "none", ex.length ? "bad" : "good")}
+    </div>
+    <section class="panel"><div class="panel-title"><span>Reconciliation sheet · ${esc(mLabel)}</span>${ready.length ? `<button class="btn small primary" type="button" id="oc-recon-all">Reconcile ${ready.length} matched invoice${ready.length > 1 ? "s" : ""}</button>` : `<span class="muted">${inMonth.length ? "Everything matched is reconciled" : "No payments this month yet"}</span>`}</div>
+      <div class="table-wrap"><table class="oc-t"><thead><tr><th>Date paid</th><th>Contractor</th><th>Project</th><th>Invoice #</th><th class="r">Net paid</th><th>Bank receipt</th><th>Matched</th><th>Reconciled</th></tr></thead><tbody>
+      ${inMonth.map(x => `<tr class="click" data-open="${x.id}"><td class="num">${esc(shortDate(new Date(x.f.paidDate + "T12:00:00").getTime()))}</td><td>${esc(x.name)}</td><td>${esc(optLabel(b, "project", x.f.project))}</td><td class="num">${esc(x.f.invoiceNo || "")}</td><td class="r num">${ocM(ocNet(b, x.f).net)}</td><td class="num">${esc(x.f.bankRef || "—")}</td><td>${isMatched(x) ? '<span class="pill good">Matched</span>' : '<span class="pill warn">Not yet</span>'}</td><td>${x.stage === won ? '<span class="pill good">Reconciled</span>' : isMatched(x) ? '<span class="pill info">Ready</span>' : '<span class="muted">—</span>'}</td></tr>`).join("") || `<tr><td colspan="8" class="muted">No invoices paid in ${esc(mLabel)} yet.</td></tr>`}
+      ${inMonth.length ? `<tr class="oc-total"><td colspan="4">Total paid in ${esc(mLabel)}</td><td class="r num">${ocM(sum(inMonth, "net"))}</td><td colspan="3"></td></tr>` : ""}</tbody></table></div></section>
+    <section class="panel"><div class="panel-title"><span>Exceptions</span><span>${ex.length}</span></div><div class="stack" style="gap:6px">
+        ${ex.map(([x, tone, msg]) => `<button type="button" class="qitem" data-open="${x.id}"><span><b>${esc(x.name)}</b> <span class="muted">· ${esc(x.f.invoiceNo || "")}</span><br><span style="font-size:.82rem">${esc(msg)}</span></span><span class="pill ${tone}">${tone === "bad" ? "Fix" : "Check"}</span></button>`).join("") || '<p class="muted">Nothing needs attention.</p>'}</div></section>
+    <section class="panel"><div class="panel-title"><span>The master</span><span>by contractor and project, from inception</span></div><div class="table-wrap"><table class="oc-t"><thead><tr><th>Contractor</th><th>Project</th><th class="r">Invoices</th><th class="r">Billed</th><th class="r">Retainage held</th><th class="r">Paid (net)</th><th class="r">Open (net)</th></tr></thead><tbody>
+        ${ledRows.map(r => `<tr><td>${esc(r.name)}${r.missing ? ' <span class="pill bad">waiver missing</span>' : ""}</td><td>${esc(r.project)}</td><td class="r num">${r.n}</td><td class="r num">${ocM(r.billed)}</td><td class="r num">${ocM(r.ret)}</td><td class="r num">${ocM(r.paid)}</td><td class="r num">${r.open ? ocM(r.open) : "—"}</td></tr>`).join("")}
+        <tr class="oc-total"><td colspan="3">All contractors</td><td class="r num">${ocM(sum(live, "gross"))}</td><td class="r num">${ocM(retHeld)}</td><td class="r num">${ocM(sum(live.filter(x => x.f.paidDate), "net"))}</td><td class="r num">${ocM(openNet)}</td></tr></tbody></table></div></section>
+    <section class="panel"><div class="panel-title"><span>What Blueprint can do for ${esc(b.business)}</span></div><div class="oc-caps">${caps.map(([h, p]) => `<div><b>${esc(h)}</b><p class="muted">${esc(p)}</p></div>`).join("")}</div>
+      <p class="muted" style="font-size:.78rem;margin-top:10px">Demo with made-up contractors, projects and amounts. Nothing here is Bayfront Builders's real data.</p></section>`;
+}
+function wireRecon() {
+  const b = bp(), d = D(), won = wonStage(b);
+  const m = $("oc-month"); if (m) m.onchange = () => { S.reconMonth = m.value; save(); render(); };
+  const btn = $("oc-recon-all"); if (!btn) return;
+  btn.onclick = () => { const month = $("oc-month") ? $("oc-month").value : TODAY.slice(0, 7); let n = 0;
+    d.deals.filter(x => x.stage !== won && x.stage !== lostStage(b) && (x.f.paidDate || "").slice(0, 7) === month && x.f.bankRef && x.f.receiptSaved).forEach(x => {
+      Object.assign(x.f, { markedPaid: true, reconMonth: month, reconciled: true }); log(x, `Recorded on the ${month} reconciliation sheet.`); setStage(x, won); if (x.stage === won) n++; });
+    save(); render(); toast(n ? `${n} invoice${n > 1 ? "s" : ""} reconciled for ${month}.` : "Nothing could be reconciled; check the exceptions."); };
+}
 
 /* ---------------- Seed data (fictional) ---------------- */
 const SUMMARIES = {
@@ -1870,6 +2055,7 @@ function demoAppts(b, deals, seedNum) {
 }
 function addDemo(S0) {
   Object.keys(BUILTIN).forEach((id, n) => {
+    if (BUILTIN[id].noDemo) return;
     const d = S0.data[id]; if (!d || d.deals.some(x => String(x.id).startsWith("dm_"))) return;
     const b = BUILTIN[id], extra = demoDeals(b, id === "container" ? 26 : 16, 1000 + n * 97);
     d.deals.push(...extra);
@@ -1888,6 +2074,7 @@ function seedBase() {
       { id: "p2", cat: "Delivery & pickup", q: "Is delivery cheaper if I buy two?", a: "Often, yes: two 20 ft can ride on one truck. Ask us to quote both together.", why: "Two leads asked about multiple units this week." },
     ] },
     data: {
+      ownerscorp: { deals: ocSeed(), appts: [] },
       container: {
         deals: [
           deal({ id: "c1", name: "Rob Hartley", place: "Elk River, MN", source: "marketplace", rep: "Alex Rivera", stage: "Quote Sent", opens: 8, lastMsg: ago(1), created: ago(9), followUp: ago(-1), phone: "(555) 010-2231", f: { mode: "buy", size: "40", condition: "used", doors: "standard", qty: 1, miles: 38, surface: "gravel", addons: ["lockbox"] }, hold: { depot: "Minneapolis, MN", sku: "40-used" }, holdUntil: now + 30 * HR, log: L(9, "Marketplace: \"Is the 40 ft still available? Need it for hay storage.\"") }),
@@ -2039,6 +2226,7 @@ LANG = S.lang;
 loadBlueprints();
 if (!BLUEPRINTS[S.bp]) { S.bp = DEFAULT_BP; S.view = "today"; }
 if ((S.orderRev || 0) < 1) { S.bp = DEFAULT_BP; S.view = "today"; S.orderRev = 1; }
+if (location.hash === "#ownerscorp" && BLUEPRINTS.ownerscorp) { S.bp = "ownerscorp"; S.view = "today"; }
 { const fresh = seed(); Object.keys(BUILTIN).forEach(id => { if (!S.data[id]) S.data[id] = fresh.data[id]; else if ((S.seedRev || 0) < 2) { const have = new Set(S.data[id].deals.map(x => x.id)); fresh.data[id].deals.forEach(x => { if (!have.has(x.id)) S.data[id].deals.push(x); }); } }); S.seedRev = 2; delete S.data.venue; }
 if ((S.demoRev || 0) < 1) { addDemo(S); S.demoRev = 1; }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
@@ -2135,12 +2323,14 @@ function summary(b, x) {
   if (b.pricing === "venue") return [f.date ? fmtDate(f.date) : "No date yet", f.guests ? `· ${f.guests} guests` : ""].join(" ");
   if (b.pricing === "roofing") { const o = offering(b, f.tile); return [f.scope === "relay" ? t("sum.relay") + " ·" : "", o ? tr(o.name) : t("sum.clayQ"), f.roofSqft ? "· " + t("sum.roofMeasured", { n: fmtNum(+f.roofSqft) }) : f.homeSqft ? "· " + t("sum.home", { n: fmtNum(+f.homeSqft) }) : ""].join(" "); }
   if (b.pricing === "cleaning") return [optLabel(b, "facility", f.facility) || t("sum.facilityQ"), f.sqft ? `· ${fmtNum(+f.sqft)} ${t("u.sqft")}` : "", f.visits ? "· " + t("sum.perWk", { v: f.visits }) : ""].join(" ");
+  if (b.pricing === "invoice") return [optLabel(b, "project", f.project) || "No project yet", f.invoiceNo ? "· " + f.invoiceNo : "", f.reqNo ? "· pay app #" + f.reqNo : ""].filter(Boolean).join(" ");
   const o = offering(b, f.offering); if (!o) return t("sum.noOffer", { w: tr(b.offerWord).toLowerCase() });
   return `${tr(o.name)}${f.qty > 1 ? " × " + f.qty : ""}${f.start ? ` · ${dayLabel(f.start)}${f.end ? "–" + dayLabel(f.end) : ""}` : ""}`;
 }
 function apptOf(deal) { return D().appts.filter(a => a.dealId === deal.id).sort((a, c) => (a.date + a.start).localeCompare(c.date + c.start)).find(a => a.date >= TODAY) || null; }
 
 const ICONS = {
+  recon: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5M8 16h3"/><path d="M14 16.5l1.8 1.8L19.5 14"/>',
   config: '<circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.4M12 18.8v2.4M21.2 12h-2.4M5.2 12H2.8M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7M18.5 18.5l-1.7-1.7M7.2 7.2 5.5 5.5"/><circle cx="12" cy="12" r="6.2"/>',
   request: '<path d="M4 5h16v11H9l-5 4z"/><path d="M9 10.5h6M12 7.5v6"/>',
   users: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.5 6-5.5s5.4 2.1 6 5.5"/><rect x="15" y="10" width="6.5" height="5.5" rx="1.2"/><path d="M16.5 10V8.6a1.75 1.75 0 0 1 3.5 0V10"/>',
@@ -2233,8 +2423,10 @@ const WF_OPS = { filled: "is filled in", empty: "is empty", eq: "is", ne: "is no
 const wfSlug = (s) => s.toLowerCase().replace(/\(.*?\)/g, "").replace(/[^a-z0-9]+/g, ".").replace(/^\.+|\.+$/g, "");
 function wfCfg(b) {
   S.wf = S.wf || {};
+  const fresh = !S.wf[b.id];
   const w = S.wf[b.id] = S.wf[b.id] || { states: WF_STATE_DEFAULTS.map(x => ({ ...x })), steps: {}, people: {}, rules: { inOrder: true, doneFirst: false, notifyReassign: true }, notices: [], rr: 0 };
   b.stages.forEach((st, i) => { if (!w.steps[st]) { const end = i >= b.stages.length - 2; w.steps[st] = { assign: "owner", state: end ? "done" : "assigned", sla: end ? 0 : i === 0 ? 4 : 48, notify: !end, conds: [], instructions: "" }; } });
+  if (fresh && b.wfDefaults) { if (b.wfDefaults.states) w.states = b.wfDefaults.states.map(x => ({ ...x })); Object.entries(b.wfDefaults.steps || {}).forEach(([st, o]) => { if (w.steps[st]) Object.assign(w.steps[st], o); }); }
   const dom = wfSlug(b.business).replace(/\./g, "") || "business";
   b.team.forEach(t => { if (!(t in w.people)) w.people[t] = `${wfSlug(t.replace(/.*·\s*/, "")) || "team"}@${dom}.example`; });
   return w;
@@ -2330,6 +2522,7 @@ function gateItems(deal, stage) {
     else if (k === "@install") items.push({ label: t("gate.install"), ok: D().appts.some(a => a.dealId === deal.id && a.kind === "install") });
     else if (k === "@structural") { if (deal.f.current === "shingle" || (deal.f.current === "concrete" && ["spanish", "barrel2"].includes(deal.f.tile))) items.push({ label: t("gate.structural"), ok: !!deal.f.structural }); }
     else if (k === "@call") items.push({ label: t("gate.call"), ok: !!(deal.calls || []).length });
+    else if (k === "@waiverok") { const n = ocNet(b, deal.f), w = deal.f.waiverAmount; items.push({ label: "a lien waiver amount that matches the net payment", ok: !!deal.f.waiverType && w !== "" && w != null && Math.abs(+w - n.net) < 1 }); }
     else if (k === "@sitecheck") { if (fulfillmentOf(b.id) === "delivery" && b.siteCheck.length) items.push({ label: t("gate.sitecheck"), ok: siteCheckDone(b, deal) }); }
     else { const f = fieldsOf(b).find(x => x.key === k); if (f && (!f.fulfillment || fulfillmentOf(b.id) === "delivery")) items.push({ label: tr(f.label).toLowerCase(), ok: !(deal.f[k] === "" || deal.f[k] == null || (f.type === "checkbox" && !deal.f[k])) }); }
   });
@@ -2593,6 +2786,7 @@ function wireRequest() {
 function navItems() {
   const b = bp(), fm = fulfillmentOf(b.id);
   return [["today", t("nav.today")], ["leads", dealW(b, true)], ["pipeline", t("nav.pipeline")], ["schedule", t("nav.schedule")],
+    b.recon ? ["recon", t("nav.recon")] : null,
     fm === "delivery" && b.depots.length ? ["map", t("nav.map")] : null,
     b.inventory !== "none" ? ["inventory", t("nav.inv." + b.inventory)] : null,
     fm === "delivery" ? ["fulfillment", t("nav.deliveries")] : null,
@@ -3416,7 +3610,7 @@ function viewWorkflow() {
   const needsVal = !isCheck && !["filled", "empty", "checked"].includes(nw.op);
   const valInput = !needsVal ? "" : fld && fld[3] ? `<select id="wfc-val" aria-label="${esc(t("wf.value"))}">${fld[3].map(o => `<option value="${esc(o[0])}" ${nw.value === o[0] ? "selected" : ""}>${esc(tr(o[1]))}</option>`).join("")}</select>`
     : `<input id="wfc-val" aria-label="${esc(t("wf.value"))}" maxlength="40" ${fld && (fld[2] === "number" || fld[2] === "money") ? 'data-rule="decimal" inputmode="decimal"' : 'data-rule="label"'} value="${esc(nw.value)}" placeholder="${esc(t("wf.valuePh"))}">`;
-  const builtin = requiresFor(b, sel).map(k => { const lab = k.startsWith("@") ? ({ "@hold": t("chk.hold"), "@appt": t("chk.appt", { what: whatW(b) }), "@install": t("chk.install"), "@structural": t("chk.structural"), "@call": t("chk.call"), "@sitecheck": t("chk.sitecheck") })[k] || k : t("wf.isFilled", { f: tr((fieldsOf(b).find(f => f.key === k) || { label: k }).label) }); return `<div class="cond"><span>🔒 ${esc(lab)}</span><span class="muted" style="font-size:.74rem">${esc(t("wf.fromBp"))}</span></div>`; }).join("");
+  const builtin = requiresFor(b, sel).map(k => { const lab = k.startsWith("@") ? ({ "@hold": t("chk.hold"), "@appt": t("chk.appt", { what: whatW(b) }), "@install": t("chk.install"), "@structural": t("chk.structural"), "@call": t("chk.call"), "@waiverok": "Lien waiver amount matches the net payment", "@sitecheck": t("chk.sitecheck") })[k] || k : t("wf.isFilled", { f: tr((fieldsOf(b).find(f => f.key === k) || { label: k }).label) }); return `<div class="cond"><span>🔒 ${esc(lab)}</span><span class="muted" style="font-size:.74rem">${esc(t("wf.fromBp"))}</span></div>`; }).join("");
   const custom = (step.conds || []).map((c, k) => `<div class="cond"><span>✅ ${esc(condLabel(b, c))}</span><button class="btn small" type="button" data-cdel="${k}" aria-label="${esc(t("wf.removeCond"))}">✕</button></div>`).join("");
   const inUse = (id) => d.deals.some(x => x.wf?.state === id) || Object.values(w.steps).some(s => s.state === id);
   const people = b.team.map(tm => { const mine = d.deals.filter(x => x.wf.assignee === tm && wfKind(w, x.wf.state) !== "done"), over = mine.filter(x => wfOverdue(b, x)).length, blocked = mine.filter(x => wfKind(w, x.wf.state) === "blocked").length;
@@ -3669,7 +3863,7 @@ function render() {
   $("bp-kind").innerHTML = [...b.kind.map(k => tr(k)), t("kind." + fulfillmentOf(b.id))].map((k, n) => `<span class="pill ${n === 2 ? "info" : "plain"}">${esc(k)}</span>`).join("");
   $("titleblock").innerHTML = `<div>Blueprint<b>${esc(tr(b.short).toLowerCase())}</b></div><div>Rev<b>0.5.${Object.keys(S.settings[b.id] || {}).length + (cfgOf(b.id)?.history.length || 0)}</b></div><div>${esc(t("tb.inventory"))}<b>${esc(t("tbv." + b.inventory))}</b></div><div>${esc(t("tb.fulfillment"))}<b>${esc(t("tbv." + fulfillmentOf(b.id)))}</b></div>`;
   renderNav(); renderWho();
-  const views = { askus: viewAskUs, today: viewToday, leads: viewLeads, pipeline: viewPipeline, schedule: viewSchedule, map: viewMap, inventory: viewInventory, fulfillment: viewFulfillment, marketing: viewMarketing, ask: viewAsk, inbox: viewInbox, workflow: viewWorkflow, users: viewUsers, config: viewConfig, request: viewRequest, blueprint: viewBlueprint, builder: viewBuilder };
+  const views = { recon: viewRecon, askus: viewAskUs, today: viewToday, leads: viewLeads, pipeline: viewPipeline, schedule: viewSchedule, map: viewMap, inventory: viewInventory, fulfillment: viewFulfillment, marketing: viewMarketing, ask: viewAsk, inbox: viewInbox, workflow: viewWorkflow, users: viewUsers, config: viewConfig, request: viewRequest, blueprint: viewBlueprint, builder: viewBuilder };
   const main = $("main"); main.innerHTML = `<div class="fade" style="display:flex;flex-direction:column;gap:16px">${configTabs()}${views[S.view]()}${lockBanner()}</div>`;
   const on = (sel, fn) => main.querySelectorAll(sel).forEach(fn);
   on("[data-open]", x => { x.onclick = () => openDrawer(x.dataset.open); x.onkeydown = (e) => { if (e.key === "Enter") openDrawer(x.dataset.open); }; });
@@ -3702,6 +3896,7 @@ function render() {
   byId("book-cancel", el => el.onclick = () => { S.booking = null; save(); render(); });
   if (S.view === "blueprint") wireFieldEditor(b);
   on(".cfgbar [data-view], .cfggrid [data-view]", x => x.onclick = () => { S.view = x.dataset.view; save(); render(); window.scrollTo({ top: 0 }); });
+  if (S.view === "recon") wireRecon();
   if (S.view === "workflow" && can("config")) wireWorkflow();
   if (S.view === "users" && can("users")) wireUsers();
   wireRequest();
