@@ -435,7 +435,7 @@
   code.uname { font: 600 .72rem/1 "JetBrains Mono", monospace; padding: 2px 6px; border-radius: 6px; background: var(--panel-2); border: 1px solid var(--line); color: var(--ink); }
   .lg-who { display: flex; flex-direction: column; gap: 3px; min-width: 0; } .lg-who small { color: var(--muted); font-size: .78rem; }
   table.users input, table.users select { padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); min-width: 0; width: 100%; }
-  table.users { min-width: 900px; } table.users td:nth-child(1) { min-width: 230px; } table.users { min-width: 1020px; } table.users td:nth-child(2) { min-width: 120px; } table.users td:nth-child(3) { min-width: 230px; } table.users td:nth-child(4), table.users td:nth-child(5) { min-width: 120px; }
+  table.users { min-width: 900px; } table.users td:nth-child(1) { min-width: 230px; } table.users { min-width: 1180px; } table.users td:nth-child(2) { min-width: 120px; } table.users td:nth-child(3) { min-width: 230px; } table.users td:nth-child(4), table.users td:nth-child(5) { min-width: 120px; }
   table.users input[type="checkbox"] { width: auto; }
   table.users td { vertical-align: middle; } table.users td.c, table.perms td.c { text-align: center; }
   table.users tr.off td { opacity: .5; }
@@ -655,7 +655,7 @@ const I18N_PAIRS = {
   "pc.all": ["all", "todos"], "pc.team": ["team", "equipe"], "pc.own": ["own", "próprios"], "pc.suggest": ["suggest", "sugere"], "pc.exceptOwner": ["except Owner", "exceto Proprietário"],
   "area.0": ["Workflow", "Fluxo de trabalho"], "area.1": ["Fields", "Campos"], "area.2": ["Pricing & settings", "Preços e ajustes"], "area.3": ["Emails", "E-mails"], "area.4": ["Something else", "Outra coisa"],
 
-  "nav.recon": ["Month-end", "Fechamento do mês"], "nav.today": ["Today", "Hoje"], "nav.pipeline": ["Pipeline", "Funil"], "nav.schedule": ["Schedule", "Agenda"], "nav.map": ["Map", "Mapa"],
+  "nav.recon": ["Month-end", "Fechamento do mês"], "users.jobTitle": ["Job title", "Cargo"], "users.jobTitlePh": ["e.g. Project manager", "ex.: Gerente de projetos"], "nav.today": ["Today", "Hoje"], "nav.pipeline": ["Pipeline", "Funil"], "nav.schedule": ["Schedule", "Agenda"], "nav.map": ["Map", "Mapa"],
   "nav.inv.reseller": ["Supplier stock", "Estoque do fornecedor"], "nav.inv.count": ["Stock", "Estoque"], "nav.inv.rental": ["Availability", "Disponibilidade"], "nav.inv.capacity": ["Date calendar", "Calendário de datas"],
   "nav.deliveries": ["Deliveries", "Entregas"], "nav.marketing": ["Marketplace ads", "Anúncios no Marketplace"], "nav.askus": ["Website chat", "Chat do site"],
   "nav.ask": ["Ask", "Base de respostas"], "nav.inbox": ["Approvals", "Aprovações"], "nav.request": ["Suggest a change", "Sugerir mudança"], "nav.config": ["Configuration", "Configurações"],
@@ -1468,6 +1468,8 @@ const BUILTIN = {
         "Matched on master": { sla: 24, instructions: "Match the bank receipt on the master and mark the invoice paid." },
       },
     },
+    users: [{ name: "Jordan Reyes", role: "owner", title: "Owner", username: "owner", works: false }, { name: "Dana Lee", role: "admin", title: "Project Administrative Assistant", username: "admin", works: true },
+      { name: "Project Manager", role: "manager", title: "Project Manager", username: "manager", works: true }, { name: "Controller", role: "user", title: "Controller", username: "user", works: true }, { name: "Robin Diaz (bookkeeper)", role: "readonly", title: "Outside bookkeeper", username: "readonly", works: false }],
     inventory: "none", fulfillment: "pickup", fulfillmentOptions: ["pickup"], depots: [], team: ["Dana Lee", "Project Manager", "Controller"],
     schedule: { resources: ["Payment run", "Month-end close"], open: 8, close: 17, slot: 30, defaultMin: 30, book: "Schedule a payment run", what: "payment run" },
     settings: [["retainagePct", "Default retainage (%)", 10], ["reactivateDays", "Flag invoices quiet after (days)", 14], ["hotOpens", "Hot at link opens", 99]],
@@ -2226,6 +2228,7 @@ LANG = S.lang;
 loadBlueprints();
 if (!BLUEPRINTS[S.bp]) { S.bp = DEFAULT_BP; S.view = "today"; }
 if ((S.orderRev || 0) < 1) { S.bp = DEFAULT_BP; S.view = "today"; S.orderRev = 1; }
+if ((S.ocRev || 0) < 1) { if (S.acct) delete S.acct.ownerscorp; if (S.session) delete S.session.ownerscorp; S.ocRev = 1; }
 if (location.hash === "#ownerscorp" && BLUEPRINTS.ownerscorp) { S.bp = "ownerscorp"; S.view = "today"; }
 { const fresh = seed(); Object.keys(BUILTIN).forEach(id => { if (!S.data[id]) S.data[id] = fresh.data[id]; else if ((S.seedRev || 0) < 2) { const have = new Set(S.data[id].deals.map(x => x.id)); fresh.data[id].deals.forEach(x => { if (!have.has(x.id)) S.data[id].deals.push(x); }); } }); S.seedRev = 2; delete S.data.venue; }
 if ((S.demoRev || 0) < 1) { addDemo(S); S.demoRev = 1; }
@@ -2650,7 +2653,7 @@ function acctOf(b) {
   S.acct = S.acct || {};
   if (!S.acct[b.id]) {
     const dom = wfSlug(b.business).replace(/\./g, "") || "business", w = wfCfg(b), mail = (n) => w.people[n] || `${wfSlug(n.replace(/.*·\s*/, "")).split(".")[0] || "team"}@${dom}.example`;
-    const users = [{ name: "Jordan Reyes", role: "owner", works: false }, { name: "Sam Patel", role: "admin", works: false },
+    const users = b.users ? b.users.map(u => ({ ...u })) : [{ name: "Jordan Reyes", role: "owner", works: false }, { name: "Sam Patel", role: "admin", works: false },
       ...b.team.map((t, i) => ({ name: t, role: i === 0 && b.team.length > 1 ? "manager" : "user", works: true })), { name: "Robin Diaz (bookkeeper)", role: "readonly", works: false }];
     S.acct[b.id] = { users: users.map((u, i) => ({ id: "u" + i, email: mail(u.name), team: "Main team", active: true, ...u })), requests: [] };
   }
@@ -2692,7 +2695,7 @@ function renderLogin() {
       <div class="field"><label for="lg-pass">${esc(t("login.password"))}</label><input id="lg-pass" type="password" autocomplete="current-password" maxlength="60"></div>
       <button class="btn primary" type="submit" style="justify-content:center">${esc(t("login.signIn"))}</button></form>
     <div class="lg-or"><span>${esc(t("login.demo"))}</span></div>
-    <div class="lg-users">${a.users.filter(u => u.active).map(u => `<button type="button" class="lg-user" data-login="${u.id}"><span class="av" style="--t:${ROLES[u.role].tone}">${esc(initials(u.name))}</span><span class="lg-who"><span class="row" style="gap:6px"><b>${esc(u.name)}</b>${rolePill(u.role)}<code class="uname">${esc(u.username)}</code></span><small>${esc(roleAbout(u.role))}</small></span></button>`).join("")}</div>
+    <div class="lg-users">${a.users.filter(u => u.active).map(u => `<button type="button" class="lg-user" data-login="${u.id}"><span class="av" style="--t:${ROLES[u.role].tone}">${esc(initials(u.name))}</span><span class="lg-who"><span class="row" style="gap:6px"><b>${esc(u.name)}</b>${rolePill(u.role)}<code class="uname">${esc(u.username)}</code></span>${u.title ? `<small style="color:var(--ink);font-weight:600">${esc(u.title)}</small>` : ""}<small>${esc(roleAbout(u.role))}</small></span></button>`).join("")}</div>
     <p class="muted" style="font-size:.74rem">${esc(t("login.disclaimer"))}</p></div>`;
   applyI18nStatic();
   $("lg-bp").onchange = (e) => { S.bp = e.target.value; ensureData(bp()); save(); renderLogin(); };
@@ -2733,8 +2736,9 @@ function viewUsers() {
   return `${head(t("cfg.view.users"), t("users.title", { biz }), t("users.sub"))}
     ${can("users") && a.requests.length ? `<section class="panel stack"><div class="panel-title"><span>${esc(t("users.requests"))}</span><span>${esc(t("users.nWaiting", { n: pending.length }))}</span></div>
       ${a.requests.slice(0, 10).map(r => `<div class="cond"><span><b>${esc(r.by)}</b> · ${esc(areaLabel(r.area))}: ${esc(r.text)} <span class="muted" style="font-size:.74rem">${shortDate(r.t)}</span></span>${r.status === "pending" ? `<span class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn small primary" type="button" data-rqok="${r.id}">${esc(t("common.approve"))}</button><button class="btn small" type="button" data-rqno="${r.id}">${esc(t("common.decline"))}</button></span>` : `<span class="spill" style="--t:${r.status === "approved" ? "#23806A" : "#A6362A"}">${esc(t(r.status === "approved" ? "common.approved" : "common.declined"))}${r.decidedBy ? " · " + esc(r.decidedBy.split(" ")[0]) : ""}</span>`}</div>`).join("")}</section>` : ""}
-    <section class="panel"><div class="panel-title"><span>${esc(t("users.people"))}</span><span>${esc(t("users.nActive", { n: a.users.filter(x => x.active).length }))}</span></div><div class="table-wrap"><table class="users"><thead><tr><th>${esc(t("users.name"))}</th><th>${esc(t("users.username"))}</th><th>${esc(t("users.email"))}</th><th>${esc(t("users.role"))}</th><th>${esc(t("users.team"))}</th><th title="${esc(t("users.worksTitle"))}">${esc(t("users.works"))}</th><th>${esc(t("users.active"))}</th><th></th></tr></thead><tbody>
+    <section class="panel"><div class="panel-title"><span>${esc(t("users.people"))}</span><span>${esc(t("users.nActive", { n: a.users.filter(x => x.active).length }))}</span></div><div class="table-wrap"><table class="users"><thead><tr><th>${esc(t("users.name"))}</th><th>${esc(t("users.jobTitle"))}</th><th>${esc(t("users.username"))}</th><th>${esc(t("users.email"))}</th><th>${esc(t("users.role"))}</th><th>${esc(t("users.team"))}</th><th title="${esc(t("users.worksTitle"))}">${esc(t("users.works"))}</th><th>${esc(t("users.active"))}</th><th></th></tr></thead><tbody>
       ${a.users.map(x => { const ed = editable(x), self = x.id === u.id; return `<tr class="${x.active ? "" : "off"}"><td><span class="row" style="gap:8px;flex-wrap:nowrap"><span class="av sm" style="--t:${ROLES[x.role].tone}">${esc(initials(x.name))}</span><input data-uname="${x.id}" data-rule="name" maxlength="40" value="${esc(x.name)}" aria-label="${esc(t("users.name"))}" ${ed ? "" : "disabled"}></span></td>
+        <td><input data-utitle="${x.id}" data-rule="label" maxlength="40" value="${esc(x.title || "")}" placeholder="${esc(t("users.jobTitlePh"))}" aria-label="${esc(t("users.jobTitle"))}" ${ed ? "" : "disabled"}></td>
         <td><input data-uuser="${x.id}" data-rule="username" maxlength="30" value="${esc(x.username)}" aria-label="${esc(t("users.username"))}" ${ed ? "" : "disabled"}></td>
         <td><input data-uemail="${x.id}" type="email" data-rule="email" maxlength="80" value="${esc(x.email)}" aria-label="${esc(t("users.email"))}" ${ed ? "" : "disabled"}></td>
         <td><select data-urole="${x.id}" aria-label="${esc(t("users.role"))}" ${ed && !self ? "" : "disabled"}>${roleOpts(x)}</select></td>
@@ -2758,6 +2762,7 @@ function wireUsers() {
   const owners = () => a.users.filter(x => x.active && x.role === "owner").length;
   const done = (msg) => { loadBlueprints(); save(); render(); if (msg) toast(msg); };
   on("[data-uname]", el => el.onchange = () => { const x = find(el.dataset.uname), n = el.value.trim().replace(/\s+/g, " "); if (!n) { el.value = x.name; return; } if (a.users.some(y => y !== x && y.name === n)) { el.value = x.name; return toast(t("users.already", { n })); } renameUser(b, x, n); done(t("users.renamed", { n })); });
+  on("[data-utitle]", el => el.onchange = () => { const x = find(el.dataset.utitle); x.title = el.value.trim(); done(x.title ? `${x.name}: ${x.title}.` : ""); });
   on("[data-uuser]", el => el.onchange = () => { const x = find(el.dataset.uuser), v = el.value.trim().toLowerCase(); if (!v) { el.value = x.username; return; } if (a.users.some(y => y !== x && y.username === v)) { el.value = x.username; return toast(t("users.taken", { v })); } x.username = v; done(t("users.newUsername", { name: x.name, v })); });
   on("[data-uemail]", el => el.onchange = () => { const x = find(el.dataset.uemail), v = el.value.trim(); if (!/^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/.test(v)) return flagInput(el, t("val.emailCo")); if (a.users.some(y => y !== x && y.email.toLowerCase() === v.toLowerCase())) return flagInput(el, t("users.emailTaken")); x.email = v; wfCfg(b).people[x.name] = v; done(t("users.emailSaved", { name: x.name })); });
   on("[data-urole]", el => el.onchange = () => { const x = find(el.dataset.urole); if (x.role === "owner" && el.value !== "owner" && owners() <= 1) { el.value = "owner"; return toast(t("users.needOwner")); } x.role = el.value; done(t("users.nowRole", { name: x.name, role: roleLabel(x.role) })); });
